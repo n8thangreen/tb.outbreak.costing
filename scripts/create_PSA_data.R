@@ -62,7 +62,7 @@ sample_inc <- data.frame(setting = orig_means$setting, t(sample_inc))
 write.csv(sample_inc, file = here::here("data", "sample_inc_mean.csv"))
 
 
-## identified
+# identified --------------------------------------------------------------
 
 # using mean and range in normal
 # sample_id <- rnorm_boot(tab$mu_id, tab$lCI_id)
@@ -101,7 +101,7 @@ write.csv(sample_screen, file = here::here("data", "sample_screen_mean.csv"))
 # write.csv(sample_screen, file = "sample_screen.csv")
 
 
-## ltbi positive tests
+# ltbi positive tests -----------------------------------------------------
 
 # using mean and range in normal
 # sample_ltbi <- rnorm_boot(tab$mu_ltbi, tab$lCI_ltbi)
