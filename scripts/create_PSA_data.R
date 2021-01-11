@@ -1,11 +1,44 @@
 
-# PSA
+# generate PSA input data
 #
 # sample from MoM distn from bootstrapped data
 # i.e. smoother but same shape
 #
 # sample total number in each (year, setting)
 # this is the input for Excel model
+
+
+n_samples <-  1000
+
+load(file = here::here("data", "tab_per_inc.RData"))
+
+
+# method of moments parameter values --------------------------------------
+
+beta_params <- list()
+gamma_params <- list()
+
+beta_params$pscreen <- map2_df(tab_per_inc$mu_pscreen,
+                               tab_per_inc$sd_pscreen,
+                               .f = MoM_beta)
+beta_params$platent <- map2_df(tab_per_inc$mu_platent,
+                               tab_per_inc$sd_platent,
+                               .f = MoM_beta)
+
+gamma_params$inc <- map2_df(tab_per_inc$mu_inc,
+                            tab_per_inc$sd_inc,
+                            .f = MoM_gamma)
+gamma_params$id <- map2_df(tab_per_inc$mu_id_per_inc,
+                           tab_per_inc$sd_id_per_inc,
+                           .f = MoM_gamma)
+
+write.csv(as.data.frame(beta_params),
+          file = here::here("data", "beta_params.csv"),
+          row.names = FALSE)
+
+write.csv(as.data.frame(gamma_params),
+          file = here::here("data", "gamma_params.csv"),
+          row.names = FALSE)
 
 
 # incidents ---------------------------------------------------------------
@@ -16,7 +49,7 @@
 # using gamma parameters
 sample_inc <- map2_dfc(.x = gamma_params$inc$shape,
                        .y = gamma_params$inc$scale,
-                       .f = ~ rgamma(n = 1000, shape = .x, scale = .y))
+                       .f = ~ rgamma(n = n_samples, shape = .x, scale = .y))
 
 # check against means
 # hist(sample_inc[[4]], breaks = 20)
@@ -37,7 +70,7 @@ write.csv(sample_inc, file = here::here("data", "sample_inc_mean.csv"))
 # using gamma parameters
 sample_id <- map2_dfc(.x = gamma_params$id$shape,
                       .y = gamma_params$id$scale,
-                      .f = ~ rgamma(n = 1000, shape = .x, scale = .y))
+                      .f = ~ rgamma(n = n_samples, shape = .x, scale = .y))
 
 sample_id <- data.frame(setting = orig_means$setting, t(sample_id))
 write.csv(sample_id, file = here::here("data", "sample_id_mean.csv"))
@@ -55,7 +88,7 @@ write.csv(sample_id, file = here::here("data", "sample_id_mean.csv"))
 # using beta parameters
 sample_screen <- map2_dfc(.x = beta_params$pscreen$a,
                           .y = beta_params$pscreen$b,
-                          .f = ~ rbeta(n = 1000, shape1 = .x, shape2 = .y))
+                          .f = ~ rbeta(n = n_samples, shape1 = .x, shape2 = .y))
 
 # check against means
 # hist(sample_screen[[5]], breaks = 40)
@@ -76,7 +109,7 @@ write.csv(sample_screen, file = here::here("data", "sample_screen_mean.csv"))
 # using beta parameters
 sample_ltbi <- map2_dfc(.x = beta_params$platent$a,
                         .y = beta_params$platent$b,
-                        .f = ~ rbeta(n = 1000, shape1 = .x, shape2 = .y))
+                        .f = ~ rbeta(n = n_samples, shape1 = .x, shape2 = .y))
 
 sample_ltbi <- data.frame(setting = orig_means$setting, t(sample_ltbi))
 write.csv(sample_ltbi, file = here::here("data", "sample_ltbi_mean.csv"))

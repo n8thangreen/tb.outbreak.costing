@@ -250,33 +250,5 @@ write.csv(tab_per_inc,
           file = here::here("data", "dat_boot_mean_per_inc.csv"),
           row.names = FALSE)
 
-
-
-# method of moments parameter values --------------------------------------
-
-beta_params <- list()
-gamma_params <- list()
-
-beta_params$pscreen <- map2_df(tab_per_inc$mu_pscreen,
-                               tab_per_inc$sd_pscreen,
-                               .f = MoM_beta)
-beta_params$platent <- map2_df(tab_per_inc$mu_platent,
-                               tab_per_inc$sd_platent,
-                               .f = MoM_beta)
-
-gamma_params$inc <- map2_df(tab_per_inc$mu_inc,
-                            tab_per_inc$sd_inc,
-                            .f = MoM_gamma)
-gamma_params$id <- map2_df(tab_per_inc$mu_id_per_inc,
-                           tab_per_inc$sd_id_per_inc,
-                           .f = MoM_gamma)
-
-write.csv(as.data.frame(beta_params),
-          file = here::here("data", "beta_params.csv"),
-          row.names = FALSE)
-
-write.csv(as.data.frame(gamma_params),
-          file = here::here("data", "gamma_params.csv"),
-          row.names = FALSE)
-
+save(tab_per_inc, file = here::here("data", "tab_per_inc.RData"))
 
