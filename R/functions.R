@@ -61,8 +61,8 @@ fn_by_group <- function(dat, fn, ...){
            latent_per_inc = latent/incidents)  #num ltbi per incident
 }
 
-sum_by_group <- partial(fn_by_group, fn = sum)
-mean_by_group <- partial(fn_by_group, fn = mean)
+sum_by_group <- purrr::partial(fn_by_group, fn = sum)
+mean_by_group <- purrr::partial(fn_by_group, fn = mean)
 
 # generate sample from bootstrap statistic distribution
 rnorm_boot <- function(mu, lCI,

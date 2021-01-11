@@ -30,7 +30,7 @@ plot_dat <-
 plot_dat$setting <-
   plot_dat$setting %>% 
   plyr::mapvalues(from = c("commercial", "education", "factory/workplace", "hospital/clinic/care centre", "other", "total"),
-                  to = c("Commercial", "Education", "Factory/workplace", "Hospital/clinic/care centre", "Other", "Total"))
+                  to =   c("Commercial", "Education", "Factory/workplace", "Hospital/clinic/care centre", "Other", "Total"))
 
 names(plot_dat)[names(plot_dat) == "setting"] <- "Setting"
 

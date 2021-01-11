@@ -15,8 +15,8 @@ library(reshape2)
 library(dplyr)
 
 
-# dat <- readxl::read_xlsx("C:/Users/ngreen1/Google Drive/TB outbreak costing/data/Birmingham/incidents.xlsx")
-dat <- readxl::read_xlsx("C:/Users/ngreen1/Google Drive/TB outbreak costing/data/Birmingham/incidents2.xlsx", sheet = 2)
+# dat <- readxl::read_xlsx(here::here("TB outbreak costing/data/Birmingham/incidents.xlsx"))
+dat <- readxl::read_xlsx(here::here("TB outbreak costing/data/Birmingham/incidents2.xlsx"), sheet = 2)
 
 ########
 # prep #
@@ -58,8 +58,8 @@ line_dat$value[line_dat$value == 0] <- NA
 # tidy labels
 line_dat$variable <-
   line_dat$variable %>% 
-  plyr::mapvalues(from = c("Indentified", "Screened", "LTBI"),
-                  to = c("Identified", "Screened", "LTBI positive"))
+  plyr::mapvalues(from = c("Identified", "Screened", "LTBI"),
+                  to =   c("Identified", "Screened", "LTBI positive"))
 
 line_dat <- 
   line_dat %>%
@@ -73,7 +73,7 @@ stack_dat$screenonly <- stack_dat$screen - stack_dat$latent
 stack_dat$identifiedonly <- stack_dat$identified - stack_dat$screen
 stack_dat <- stack_dat[!stack_dat$year %in% c(2010, 2011, 2012), ]
 
-xx <- melt(stack_dat[ ,c("year", "setting", "year_setting", "latent", "screenonly", "identifiedonly")],
+xx <- melt(stack_dat[, c("year", "setting", "year_setting", "latent", "screenonly", "identifiedonly")],
            id.vars = c("year", "setting", "year_setting"),
            value.name = "count")
 
@@ -131,7 +131,7 @@ ggplot(bar_dat, aes(x = year_setting, y = screen)) +
 ggplot(bar_dat, aes(x = year_setting, y = latent)) +
   geom_bar(stat = "identity", fill = as.numeric(as.factor(bar_dat$setting)), colour = "white") +
   scale_x_discrete(breaks = bar_dat$year_setting, labels = bar_dat$setting,
-                   expand = c(0.1,0.1)) +
+                   expand = c(0.1, 0.1)) +
   facet_grid(~ year, space = "free_x", scales = "free_x", switch = "x") +
   theme_bw() +
   theme(strip.placement = "outside",
@@ -146,7 +146,7 @@ ggplot(bar_dat, aes(x = year_setting, y = latent)) +
 ggplot(bar_dat, aes(x = year_setting, y = incidents)) +
   geom_bar(stat = "identity", fill = as.numeric(as.factor(bar_dat$setting)), colour = "white") +
   scale_x_discrete(breaks = bar_dat$year_setting, labels = bar_dat$setting,
-                   expand = c(0.1,0.1)) +
+                   expand = c(0.1, 0.1)) +
   facet_grid(~ year, space = "free_x", scales = "free_x", switch = "x") +
   theme_bw() +
   theme(strip.placement = "outside",
@@ -165,7 +165,7 @@ ggplot() +
            data = xx, position = "fill", stat = "identity") +
   scale_y_continuous(labels = scales::percent_format()) +
   scale_x_discrete(breaks = xx$year_setting, labels = xx$setting,
-                   expand = c(0.1,0.1)) +
+                   expand = c(0.1, 0.1)) +
   facet_grid(~ year, space = "free_x", scales = "free_x", switch = "x") +
   theme_bw() +
   theme(strip.placement = "outside",

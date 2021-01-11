@@ -17,8 +17,6 @@ library(tidyr)
 library(broom)
 
 
-source("functions.R")
-source("VBA_converted.R")
 source("model_data.R")
 
 

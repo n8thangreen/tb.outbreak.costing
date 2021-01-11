@@ -31,7 +31,7 @@ summarise_dat <- function(dat_long) {
 
 cost_per_inc <-
   readxl::read_excel(
-    path = "C:/Users/ngreen1/Google Drive/TB outbreak costing/costing xls tools/TB_incident_contact_tracing_costing/151019-TB_incident_contact_tracing_costing-Birmingham.xlsm",
+    path = here::here("TB outbreak costing/costing xls tools/TB_incident_contact_tracing_costing/151019-TB_incident_contact_tracing_costing-Birmingham.xlsm"),
     sheet = "PSA_total",
     range = "A1:CL52")
 
@@ -46,7 +46,6 @@ cost_per_inc$setting[is.na(cost_per_inc$setting)] <- "total"        # rename yea
 cost_long <-
   melt(cost_per_inc, id.vars = c("year", "setting")) %>% 
   filter(year >= 2013)
-  
 
 summary_cost <-
   summarise_dat(cost_long)
@@ -145,7 +144,7 @@ sample_ltbi <-
 nrep <- min(ncol(sample_ltbi),
             ncol(cost_per_inc)) - 2          # number of samples in both datasets
 
-cost_per_ltbi <- cost_per_inc[ ,3:nrep]/sample_ltbi[ ,3:nrep]
+cost_per_ltbi <- cost_per_inc[, 3:nrep]/sample_ltbi[, 3:nrep]
 
 cost_per_ltbi <-
   cost_per_ltbi %>% 
