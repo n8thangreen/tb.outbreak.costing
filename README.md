@@ -1,5 +1,7 @@
 ## TB Outbreak Costing
 
+This repo contains the R code to calculate TB outbreak costing using data from incidents in Birmingham, UK.
+
 ### Overview
 #### Background
 Tuberculosis remains an import public health challenge in England, despite 7 years of declining cases.
@@ -15,9 +17,6 @@ However, there are occasions when large-scale incident responses are required.
 To ensure appropriate resource allocation it is necessary to assess the costs and effectiveness of public health interventions, and TB incident investigation has the potential to be particularly costly as it is labour-intensive.
 There have been recent analyses of routine TB contact tracing in England, but analysis of incident responses is currently lacking.
 To address this important evidence gap, we analysed data from Birmingham and Solihull TB Service, whose geographic area has a three year average of 177 TB cases (15.1 per 100,000 population), to determine the costs and yield of TB incident investigations performed in 2013-2018 and investigate reasons for any variation .
-
-### R code
-This repo contains the R code to calculate TB outbreak costing using data from incidents in Birmingham, UK.
 
 ### Related work
 #### Excel model
