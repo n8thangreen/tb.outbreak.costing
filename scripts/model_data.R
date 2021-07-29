@@ -1,4 +1,6 @@
 
+rm(list = ls())
+
 ## on-costs
 
 p_pension18 <<- 0.2060
@@ -79,3 +81,14 @@ c_phoneRA_BIRM <<- t_phone_preRA*(c_nurse_7_outside_hr + (c_nurse_7_outside_yr -
 
 c_siteRA_BIRM <<- 2*t_siteRA*(c_nurse_7_outside_hr + (c_nurse_7_outside_yr - NI_min)*p_pensionNI/(days_2018*7.5)) + 2*c_drive*d_site
 
+
+# save all as csv table
+params <- mget(ls())
+tab <-
+  data.frame(name = names(params),
+             value = as.matrix(params),
+             row.names = NULL)
+
+write.csv(as.matrix(tab), file = "data/param_vals.csv")
+
+rm(params, tab)

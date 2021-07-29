@@ -7,8 +7,9 @@
 
 ## this is directly from the Excel model, sheet Incident
 dat <-
-  readxl::read_excel("C:/Users/ngreen1/Google Drive/TB outbreak costing/costing xls tools/TB_incident_contact_tracing_costing/101019-TB_incident_contact_tracing_costing-Birmingham.xlsm",
-                     range = "Incidents!P3:U54")
+  readxl::read_excel(
+    "C:/Users/ngreen1/Google Drive/TB outbreak costing/costing xls tools/TB_incident_contact_tracing_costing/101019-TB_incident_contact_tracing_costing-Birmingham.xlsm",
+    range = "Incidents!P3:U54")
 
 
 dat$setting <- as.factor(dat$setting)

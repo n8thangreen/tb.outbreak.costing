@@ -1,8 +1,11 @@
 
 #' ADJUSTED_SALARY
 #'
-#' @param c_jobtitle_hr 
-#' @param c_jobtitle_yr 
+#' take into account pension and
+#' national insurance contributions
+#' 
+#' @param c_jobtitle_hr hourly
+#' @param c_jobtitle_yr yearly
 #'
 #' @return
 #' @export
@@ -17,7 +20,7 @@ ADJUSTED_SALARY <- function(c_jobtitle_hr,
 
 #' PATH_INVITE_BIRM
 #'
-#' @param n_id 
+#' @param n_id number identified
 #' @param n_screen 
 #' @param n_latent 
 #'
@@ -28,6 +31,7 @@ PATH_INVITE_BIRM <- function(n_id,
                              n_screen,
                              n_latent) {
   
+  # risk assessment
   RA <- c_inc_meet_BIRM + c_phoneRA_BIRM + c_siteRA_BIRM
   screen <-
     CINVITE_SCREEN(n_id, n_screen) + CFUP(n_latent) + c_meeting_review_BIRM
@@ -37,7 +41,7 @@ PATH_INVITE_BIRM <- function(n_id,
 
 #' CINVITE_SCREEN
 #'
-#' @param n_id 
+#' @param n_id number identified
 #' @param n_screen 
 #'
 #' @return
@@ -46,6 +50,7 @@ PATH_INVITE_BIRM <- function(n_id,
 CINVITE_SCREEN <- function(n_id,
                            n_screen) {
   
+  # total administration time
   T_ADMIN <- t_admin_appt * n_id + t_admin_post * n_screen
   c_nurse_3_hr_adj <- ADJUSTED_SALARY(c_nurse_3_outside_hr, c_nurse_3_outside_yr)
   
@@ -54,7 +59,9 @@ CINVITE_SCREEN <- function(n_id,
 
 
 #' CALLTX
-#'
+#' 
+#' cost of all treatment for ltbi positive
+#' 
 #' @param n_latent 
 #'
 #' @return
@@ -68,7 +75,7 @@ CALLTX <- function(n_latent) {
 
 #' PATH_SITE_BIRM
 #'
-#' @param n_id 
+#' @param n_id number identified
 #' @param n_screen 
 #' @param n_latent 
 #'
@@ -77,17 +84,19 @@ CALLTX <- function(n_latent) {
 #'
 PATH_SITE_BIRM <- function(n_id,
                            n_screen,
-                           n_latent) {
+                           n_latent,
+                           phleb_thresh = 25) {
   
   RA <- c_inc_meet_BIRM + c_phoneRA_BIRM + c_siteRA_BIRM
   
-  if (n_screen > 25) {
+  # when to use external company for taking blood
+  if (n_screen > phleb_thresh) {
     screen <- CSITE_SCREEN_PHLEB(n_id, n_screen)
   }
-  else if (n_screen <= 25) {
+  else if (n_screen <= phleb_thresh) {
     screen <- CSITE_SCREEN_NURSE(n_id, n_screen)
   } else{
-    screen <- -999999 #error code
+    screen <- -999999  # error code
   }
   
   return(RA + screen + CFUP(n_latent) + c_meeting_review_BIRM)
@@ -96,7 +105,7 @@ PATH_SITE_BIRM <- function(n_id,
 
 #' CSITE_SCREEN_PHLEB
 #'
-#' @param n_id 
+#' @param n_id number identified
 #' @param n_screen 
 #'
 #' @return
@@ -123,7 +132,9 @@ CSITE_SCREEN_PHLEB <- function(n_id,
 
 
 #' CFUP
-#'
+#' 
+#' cost of follow-up appointments
+#' 
 #' @param n_latent 
 #'
 #' @return
@@ -137,7 +148,7 @@ CFUP <- function(n_latent) {
 
 #' PATH_INFORM
 #' 
-#' @param n_id 
+#' @param n_id number identified
 #'
 #' @return
 #' @export
@@ -152,7 +163,7 @@ PATH_INFORM <- function(n_id) {
 
 #' CSITE_SCREEN_NURSE
 #'
-#' @param n_id 
+#' @param n_id number identified
 #' @param n_screen 
 #'
 #' @return
@@ -178,18 +189,27 @@ CSITE_SCREEN_NURSE <- function(n_id,
 
 #' total_year_cost
 #'
-#' @param inc_sample 
-#' @param id_per_inc 
-#' @param screen_per_inc 
-#' @param ltbi_per_inc 
+#' this is the main overall cost function.
+#' 
+#' @param inc_sample number of incidents 
+#' @param id_per_inc number identified per incident  
+#' @param screen_per_inc number screened per incident
+#' @param ltbi_per_inc  number of ltbi per incident
 #'
-#' @return
+#' @return real
 #' @export
-#'
+#' 
+#' @examples 
+#' 
+#' total_year_cost(10,10,5,1)
+#' 
 total_year_cost <- function(inc_sample,
                             id_per_inc,
                             screen_per_inc,
                             ltbi_per_inc){
+  
+  if (id_per_inc < screen_per_inc) stop("can't have more screened than identified", call. = FALSE)
+  if (screen_per_inc < ltbi_per_inc) stop("can't have more ltbi than screened", call. = FALSE)
   
   invite_cost <- PATH_INVITE_BIRM(id_per_inc, screen_per_inc, ltbi_per_inc)
   site_cost <- PATH_SITE_BIRM(id_per_inc, screen_per_inc, ltbi_per_inc)

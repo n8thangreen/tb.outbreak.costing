@@ -1,7 +1,7 @@
 
 # tb incident contact investigation costing study
 #
-# cascade of cost per person identified, screened, positive
+# cascade plot of cost per person identified, screened, positive
 # pooling by year for each setting
 # 
 # N Green
@@ -41,5 +41,5 @@ ggplot(plot_dat,
   geom_point() +
   geom_line() +
   theme_bw() +
-  xlab("") + ylab("Cost per person (£)")
+  xlab("") + ylab("Cost per person (?)")
 

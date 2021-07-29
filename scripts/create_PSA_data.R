@@ -1,5 +1,6 @@
 
 # generate PSA input data
+# for total_year_cost()
 #
 # sample from MoM distn from bootstrapped data
 # i.e. smoother but same shape
@@ -8,7 +9,7 @@
 # this is the input for Excel model
 
 
-n_samples <-  1000
+n_samples <- 1000
 
 load(file = here::here("data", "tab_per_inc.RData"))
 
@@ -96,6 +97,7 @@ sample_screen <- map2_dfc(.x = beta_params$pscreen$a,
 
 sample_screen <- data.frame(setting = orig_means$setting, t(sample_screen))
 write.csv(sample_screen, file = here::here("data", "sample_screen_mean.csv"))
+
 # sample_screen <- as_tibble(cbind(year = orig_dat$year, sample_screen))
 # sample_screen <- include_year_totals(sample_screen)
 # write.csv(sample_screen, file = "sample_screen.csv")
@@ -113,6 +115,7 @@ sample_ltbi <- map2_dfc(.x = beta_params$platent$a,
 
 sample_ltbi <- data.frame(setting = orig_means$setting, t(sample_ltbi))
 write.csv(sample_ltbi, file = here::here("data", "sample_ltbi_mean.csv"))
+
 # sample_ltbi <- as_tibble(cbind(year = orig_dat$year, sample_ltbi))
 # sample_ltbi <- include_year_totals(sample_ltbi)
 # write.csv(sample_ltbi, file = "sample_ltbi.csv")

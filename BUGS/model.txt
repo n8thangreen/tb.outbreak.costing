@@ -1,0 +1,38 @@
+model {
+
+  for (yr in 1:n_yr) {
+    inc[yr, s] ~ poisson(rate_inc[yr, s])
+  }
+  
+  for (i in 1:n_inc) {
+    id[i] ~ poisson(rate_id[yr[i], s[i]])
+    screen[i] ~ bin(id[yr[i], s[i]], p_screen[yr[i], s[i]])
+    ltbi[i] ~ bin(screen[yr[i], s[i]], p_ltbi[yr[i], s[i]])
+  }
+
+  for (yr in 1:n_yr) {
+    for (s in 1:n_set) {
+      log(rate_inc[yr, s]) = a_inc[yr] + b_inc[s]
+      log(rate_id[yr, s]) = a_id[yr] + b_id[s]
+      logit(p_sreen[yr, s]) = a_s[yr] + b_s[s]
+      logit(p_ltbi[yr, s]) = a_l[yr] + b_l[s]
+    }
+  }
+
+  ## priors
+  
+  for (yr in 1:n_yr) {
+    a_inc[yr] ~ normal(ainc_0, ainc_sd)
+    a_id[yr] ~ normal(aid_0, aid_sd)
+    a_s[yr] ~ normal(as_0, as_sd)
+    a_l[yr] ~ normal(al_0, al_sd)
+  }
+  
+  for (s in 1:n_set) {
+    b_inc[s] ~ normal(binc_0, binc_sd)
+    b_id[s] ~ normal(bid_0, bid_sd)
+    b_s[s] ~ normal(bs_0, bs_sd)
+    b_l[s] ~ normal(bl_0, bl_sd)
+  }
+}
+
