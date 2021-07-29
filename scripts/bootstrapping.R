@@ -4,7 +4,7 @@
 #
 # bootstrap raw incidence data then aggregate
 # to get 95% CI estimates using quantiles
-# and then sample from normal distns
+# and then sample from normal distributions
 # with these parameter values to get counts of
 # incidents, identified, screened and latent positive
 
@@ -19,38 +19,12 @@ library(broom)
 
 source("scripts/model_data.R")
 
+dat <- read.csv("data/cleaned_data.csv", check.names = FALSE)
+
 
 ########
 # prep #
 ########
-
-# individual incidents counts by setting and year
-dat_raw <-
-  readxl::read_xlsx(
-    path = here::here("../../data", "Birmingham", "incidents2.xlsx"),
-    sheet = "data")
-
-dat <- dat_raw[, c("year",
-                   "setting2",
-                   "Total No identified",
-                   "Total No Screened",
-                   "Latent")]
-
-names(dat)[names(dat) == "setting2"] <- "setting"
-
-# remove incidents with missing data
-dat <- dat[dat$year %in% 2013:2018, ]
-dat <- dat[!is.na(dat$`Total No identified`), ]
-dat <- dat[!is.na(dat$`Total No Screened`), ]
-
-dat$Latent[is.na(dat$Latent)] <- 0
-
-dat <-
-  dat %>% 
-  mutate(setting = factor(setting),
-         p_screen = `Total No Screened`/`Total No identified`,  #prop screened of identified for each incident
-         p_ltbi = `Latent`/`Total No Screened`)                 #prop ltbi of screened for each incident
-
 
 # total number of individuals within each year and setting
 # and proportions
@@ -65,6 +39,7 @@ total_year_setting <-
 
 # create to
 # check against bootstrap estimates
+# across all years
 dat_means <-
   mean_by_setting(total_year_setting)
 
@@ -72,15 +47,16 @@ dat_means <-
 #############
 # bootstrap #
 #############
-#https://cran.r-project.org/web/packages/rsample/vignettes/Basics.html
+# see https://cran.r-project.org/web/packages/rsample/vignettes/Basics.html
 
-# 100 bootstraps samples
-boots <- bootstraps(dat, times = 100)
+boots <- rsample::bootstraps(dat, times = 100)
 
 ## bootstrap statistic
 # over each bootstrap sample
 # as.data.frame() transforms from bootstrap object
 
+##TODO: this is very unclear!
+## rewrite...
 boot_tabs <-
   boots %>% 
   mutate(
@@ -112,7 +88,8 @@ boot_tabs <-
 
 
 
-# bootstrapped costs ------------------------------------------------------
+###################################################
+# bootstrapped costs
 
 # - year totals for each setting
 # - mean(#identified/#incidents) 
@@ -178,7 +155,8 @@ write.csv(stacked_per_inc,
 # write.csv(tab_total, file = here::here("data", "bar_dat_boot_mean.csv"), row.names = FALSE)  
 
 
-## summary table
+#################################
+# summary table
 
 tab_per_inc <-
   stacked_per_inc %>% 

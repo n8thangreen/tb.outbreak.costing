@@ -1,13 +1,11 @@
-#
+
 # TB incident contact investigation costing study
 # N Green
-#
 
 # raw table data from Birmingham is stacked in to a single incident table 
 # in Excel and then read in here.
 # This script aggregate across years and setting to get total counts.
 # Plots are then made over years and setting.
-#
 
 
 library(ggplot2)
