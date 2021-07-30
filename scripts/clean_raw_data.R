@@ -27,9 +27,15 @@ dat$Latent[is.na(dat$Latent)] <- 0
 
 dat <-
   dat %>% 
-  mutate(setting = factor(setting),
-         p_screen = `Total No Screened`/`Total No identified`,  #prop screened of identified for each incident
-         p_ltbi = `Latent`/`Total No Screened`)                 #prop ltbi of screened for each incident
+  mutate(
+    setting = factor(setting),
+    p_screen = `Total No Screened`/`Total No identified`,  # prop screened of identified per incident
+    p_ltbi = `Latent`/`Total No Screened`)                 # prop ltbi of screened per incident
+
+##TODO: confirm what this should be
+# row 132 too many latent. should be 1?
+dat <-
+  mutate(dat, Latent = pmin(`Total No Screened`, Latent))
 
 write.csv(dat, file = "data/cleaned_data.csv", row.names = FALSE)
 

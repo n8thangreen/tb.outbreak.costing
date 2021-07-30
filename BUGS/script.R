@@ -6,12 +6,6 @@ library(R2jags)
 
 dat <- read.csv("data/cleaned_data.csv", check.names = FALSE)
 
-##TODO: confirm what this should be and move to cleaning script
-# row 132 too many latent. should be 1?
-
-dat <-
-  mutate(dat, Latent = pmin(`Total No Screened`, Latent))
-
 inc <-
   dcast(dat, year ~ setting, value.var = "Latent") %>% 
   select(-year)
@@ -31,15 +25,17 @@ inits <-
   list(list())
 
 filein <- "BUGS/model.txt"
-params <- c("rate_inc", "rate_id", "p_screen", "p_ltbi")
+params <- c("rate_inc", "rate_id", "p_screen", "p_ltbi",
+            "srate_inc", "srate_id", "sp_screen", "sp_ltbi",
+            "pred_n_screen", "pred_n_ltbi")
 
-n.iter <- 10000
-n.burnin <- 500
+n.iter <- 20000
+n.burnin <- 1000
 n.thin <- floor((n.iter - n.burnin)/500)
 
-mm1 <-
+res_bugs <-
   jags(data = dataJags,
-       inits = inits,
+       inits = NULL,
        parameters.to.save = params,
        model.file = filein,
        n.chains = 1,
@@ -48,13 +44,14 @@ mm1 <-
        n.thin,
        DIC = TRUE)
 
-R2WinBUGS::attach.bugs(mm1$BUGSoutput)
+R2WinBUGS::attach.bugs(res_bugs$BUGSoutput)
+out <- res_bugs$BUGSoutput
 
-out <- mm1$BUGSoutput
+save(res_bugs, file = "data/BUGS_output.RData")
 
 
-###########################
-# output
+############################
+# plots
 
 ##TODO: improve these plots
 ##      use the ggplot functions from mcmc stan work
@@ -65,10 +62,34 @@ grid <-
     levels(as.factor(dat$setting)))
 grid[,"names"] <- paste(grid[,"Var1"], grid[,"Var2"])
 
-mcmcplots::caterplot(mm1, parms = c("p_ltbi"), reorder = FALSE, labels = grid$names, labels.loc = "above")
-mcmcplots::caterplot(mm1, parms = c("p_screen"), reorder = FALSE, labels = grid$names, labels.loc = "above")
-mcmcplots::caterplot(mm1, parms = c("rate_id"), reorder = FALSE, labels = grid$names, labels.loc = "above")
-mcmcplots::caterplot(mm1, parms = c("rate_inc"), reorder = FALSE, labels = grid$names, labels.loc = "above")
+mcmcplots::caterplot(res_bugs, parms = c("p_ltbi"), reorder = FALSE,
+                     labels = grid$names, labels.loc = "above")
+mcmcplots::caterplot(res_bugs, parms = c("p_screen"), reorder = FALSE,
+                     labels = grid$names, labels.loc = "above")
+mcmcplots::caterplot(res_bugs, parms = c("rate_id"), reorder = FALSE,
+                     labels = grid$names, labels.loc = "above")
+mcmcplots::caterplot(res_bugs, parms = c("rate_inc"), reorder = FALSE,
+                     labels = grid$names, labels.loc = "above")
 
-save(mm1, file = "data/jags_output.RData")
+# setting only
+par(mfrow = c(3,2))
+mcmcplots::caterplot(res_bugs, parms = c("sp_ltbi"), reorder = FALSE,
+                     labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-0.1,0.3))
+title("prob ltbi")
+mcmcplots::caterplot(res_bugs, parms = c("sp_screen"), reorder = FALSE,
+                     labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(0.5,1.1))
+title("prob screen")
+mcmcplots::caterplot(res_bugs, parms = c("srate_id"), reorder = FALSE,
+                     labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-100,400))
+title("n identify")
+mcmcplots::caterplot(res_bugs, parms = c("srate_inc"), reorder = FALSE,
+                     labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-0.1,12))
+title("n incident")
+mcmcplots::caterplot(res_bugs, parms = c("pred_n_screen"), reorder = FALSE,
+                     labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-0.10,300))
+title("n screen")
+mcmcplots::caterplot(res_bugs, parms = c("pred_n_ltbi"), reorder = FALSE,
+                     labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-4,20))
+title("n ltbi")
+
 

@@ -7,20 +7,18 @@
 # 2. setting only averages
 
 
+library(dplyr)
+
+#
 print_mean_with_CI <- function(mid,
                                lowerCI,
                                upperCI,
-                               digits = 2){
+                               digits = 2) {
   
   paste0(round(mid, digits), " [",
          round(lowerCI, digits), ", ",
          round(upperCI, digits), "]")
 }
-
-
-# main --------------------------------------------------------------------
-
-library(dplyr)
 
 
 ####################
@@ -113,7 +111,7 @@ write.csv(tab_datb, file = here::here("paper_datatable_boot.csv"))
 # setting only #
 ################
 
-tab_per_inc <- read.csv(file = here::here("data", "dat_boot_mean_per_inc.csv"))
+tab_per_inc <- read.csv(file = here::here("data", "boot_mean_per_inc.csv"))
 
 paper_table <-
   cbind.data.frame(

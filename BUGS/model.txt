@@ -70,5 +70,18 @@ model {
   bl_tau = 1/exp(bl_logsd)
   
   # bl_tau ~ dgamma(0.001, 0.001)
+  
+  ## predictions
+  
+  for (s in 1:n_set) {
+    log(srate_inc[s]) = ainc_0 + b_inc[s]
+    log(srate_id[s]) = aid_0 + b_id[s]
+    logit(sp_screen[s]) = as_0 + b_s[s]
+    logit(sp_ltbi[s]) = al_0 + b_l[s]
+    
+    pred_n_screen[s] = sp_screen[s]*srate_id[s]
+    pred_n_ltbi[s] = pred_n_screen[s]*sp_ltbi[s]
+  }
+  
 }
 
