@@ -1,38 +1,74 @@
 model {
 
   for (yr in 1:n_yr) {
-    inc[yr, s] ~ poisson(rate_inc[yr, s])
+    for (s in 1:n_set) {
+      inc[yr, s] ~ dpois(rate_inc[yr, s])
+    }
   }
   
   for (i in 1:n_inc) {
-    id[i] ~ poisson(rate_id[yr[i], s[i]])
-    screen[i] ~ bin(id[yr[i], s[i]], p_screen[yr[i], s[i]])
-    ltbi[i] ~ bin(screen[yr[i], s[i]], p_ltbi[yr[i], s[i]])
+    id[i] ~ dpois(rate_id[yr[i], set[i]])
+    screen[i] ~ dbin(p_screen[yr[i], set[i]], id[i])
+    ltbi[i] ~ dbin(p_ltbi[yr[i], set[i]], screen[i])
   }
 
   for (yr in 1:n_yr) {
     for (s in 1:n_set) {
       log(rate_inc[yr, s]) = a_inc[yr] + b_inc[s]
       log(rate_id[yr, s]) = a_id[yr] + b_id[s]
-      logit(p_sreen[yr, s]) = a_s[yr] + b_s[s]
+      logit(p_screen[yr, s]) = a_s[yr] + b_s[s]
       logit(p_ltbi[yr, s]) = a_l[yr] + b_l[s]
     }
   }
 
-  ## priors
-  
   for (yr in 1:n_yr) {
-    a_inc[yr] ~ normal(ainc_0, ainc_sd)
-    a_id[yr] ~ normal(aid_0, aid_sd)
-    a_s[yr] ~ normal(as_0, as_sd)
-    a_l[yr] ~ normal(al_0, al_sd)
+    a_inc[yr] ~ dnorm(ainc_0, ainc_tau)
+    a_id[yr] ~ dnorm(aid_0, aid_tau)
+    a_s[yr] ~ dnorm(as_0, as_tau)
+    a_l[yr] ~ dnorm(al_0, al_tau)
   }
   
   for (s in 1:n_set) {
-    b_inc[s] ~ normal(binc_0, binc_sd)
-    b_id[s] ~ normal(bid_0, bid_sd)
-    b_s[s] ~ normal(bs_0, bs_sd)
-    b_l[s] ~ normal(bl_0, bl_sd)
+    b_inc[s] ~ dnorm(binc_0, binc_tau)
+    b_id[s] ~ dnorm(bid_0, bid_tau)
+    b_s[s] ~ dnorm(bs_0, bs_tau)
+    b_l[s] ~ dnorm(bl_0, bl_tau)
   }
+  
+  ## priors
+  
+  ainc_0 ~ dnorm(0, 0.001)
+  ainc_logsd ~ dnorm(0, 0.001)
+  ainc_tau = 1/exp(ainc_logsd)
+  
+  aid_0 ~ dnorm(0, 0.001)
+  aid_logsd ~ dnorm(0, 0.001)
+  aid_tau = 1/exp(aid_logsd)
+  
+  as_0 ~ dnorm(0, 0.001)
+  as_logsd ~ dnorm(0, 0.001)
+  as_tau = 1/exp(as_logsd)
+  
+  al_0 ~ dnorm(0, 0.001)
+  al_logsd ~ dnorm(0, 0.001)
+  al_tau = 1/exp(al_logsd)
+  
+  binc_0 ~ dnorm(0, 0.001)
+  binc_logsd ~ dnorm(0, 0.001)
+  binc_tau = 1/exp(binc_logsd)
+  
+  bid_0 ~ dnorm(0, 0.001)
+  bid_logsd ~ dnorm(0, 0.001)
+  bid_tau = 1/exp(bid_logsd)
+  
+  bs_0 ~ dnorm(0, 0.001)
+  bs_logsd ~ dnorm(0, 0.001)
+  bs_tau = 1/exp(bs_logsd)
+  
+  bl_0 ~ dnorm(0, 0.001)
+  bl_logsd ~ dnorm(0, 0.001)
+  bl_tau = 1/exp(bl_logsd)
+  
+  # bl_tau ~ dgamma(0.001, 0.001)
 }
 

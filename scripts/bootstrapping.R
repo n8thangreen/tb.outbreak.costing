@@ -16,6 +16,7 @@ library(purrr)
 library(tidyr)
 library(broom)
 
+devtools::load_all(".")
 
 source("scripts/model_data.R")
 
@@ -28,19 +29,19 @@ dat <- read.csv("data/cleaned_data.csv", check.names = FALSE)
 
 # total number of individuals within each year and setting
 # and proportions
+# i.e. sum all same settings
 total_year_setting <-
   dat %>%
   sum_by_group(year, setting)
 
 # # mean number of individuals within each setting
-# dat_means <-
+# mean_setting <-
 #   dat %>%
 #   mean_by_group(setting)
 
-# create to
 # check against bootstrap estimates
 # across all years
-dat_means <-
+mean_setting <-
   mean_by_setting(total_year_setting)
 
 
@@ -51,12 +52,12 @@ dat_means <-
 
 boots <- rsample::bootstraps(dat, times = 100)
 
-## bootstrap statistic
+
+#####################################################
+# bootstrap statistic
 # over each bootstrap sample
 # as.data.frame() transforms from bootstrap object
 
-##TODO: this is very unclear!
-## rewrite...
 boot_tabs <-
   boots %>% 
   mutate(
@@ -92,8 +93,8 @@ boot_tabs <-
 # bootstrapped costs
 
 # - year totals for each setting
-# - mean(#identified/#incidents) 
-stacked_per_inc <- 
+# - mean(#identified/#incidents)
+stacked_per_inc <-
   boot_tabs %>%
   select(-splits, -total) %>%
   unnest(cols = c(per_inc)) %>% 
@@ -109,11 +110,6 @@ stacked_per_inc <-
          cost_per_id = total_cost/identified,
          cost_per_screen = total_cost/screen,
          cost_per_ltbi = total_cost/latent)
-
-write.csv(stacked_per_inc,
-          file = here::here("data", "stacked_per_inc.csv"),
-          row.names = FALSE)
-
 
 # view bootstrap samples
 # par(mfrow = c(3,3))
@@ -223,10 +219,18 @@ tab_per_inc <-
 # tab_per_inc$sigma_platent <- (tab_per_inc$mu_platent - tab_per_inc$lCI_platent)/1.96
 # tab_per_inc$sigma_pscreen <- (tab_per_inc$mu_pscreen - tab_per_inc$lCI_pscreen)/1.96
 
-# write.csv(tab, file = here::here("data", "bar_dat_boot.csv"), row.names = FALSE)  
+
+########
+# save #
+########
+
 write.csv(tab_per_inc,
-          file = here::here("data", "dat_boot_mean_per_inc.csv"),
+          file = here::here("data", "boot_mean_per_inc.csv"),
           row.names = FALSE)
 
 save(tab_per_inc, file = here::here("data", "tab_per_inc.RData"))
+
+write.csv(stacked_per_inc,
+          file = here::here("data", "boot_stacked_per_inc.csv"),
+          row.names = FALSE)
 
