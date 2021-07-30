@@ -12,8 +12,9 @@
 #'
 ADJUSTED_SALARY <- function(c_jobtitle_hr,
                             c_jobtitle_yr){
-  
-  excess_salary <- (c_jobtitle_yr - NI_min)/(days_2018 * 7.5) * p_pensionNI
+  hrs_per_day <- 7.5
+  total_hrs <- days_2018 * hrs_per_day
+  excess_salary <- (c_jobtitle_yr - NI_min)/total_hrs * p_pensionNI
   return(c_jobtitle_hr + excess_salary)
 }
 
@@ -77,7 +78,8 @@ CALLTX <- function(n_latent) {
 #'
 #' @param n_id number identified
 #' @param n_screen 
-#' @param n_latent 
+#' @param n_latent
+#' @param phleb_thresh numbered screened to use external company for taking blood
 #'
 #' @return
 #' @export
@@ -89,14 +91,13 @@ PATH_SITE_BIRM <- function(n_id,
   
   RA <- c_inc_meet_BIRM + c_phoneRA_BIRM + c_siteRA_BIRM
   
-  # when to use external company for taking blood
   if (n_screen > phleb_thresh) {
     screen <- CSITE_SCREEN_PHLEB(n_id, n_screen)
   }
   else if (n_screen <= phleb_thresh) {
     screen <- CSITE_SCREEN_NURSE(n_id, n_screen)
   } else{
-    screen <- -999999  # error code
+   stop("error in PATH_SITE_BIRM() phleb_thresh", call. = FALSE)
   }
   
   return(RA + screen + CFUP(n_latent) + c_meeting_review_BIRM)
@@ -122,10 +123,13 @@ CSITE_SCREEN_PHLEB <- function(n_id,
   
   c_nurse_7_hr_adj <- ADJUSTED_SALARY(c_nurse_7_outside_hr, c_nurse_7_outside_yr)
   c_nurse_3_hr_adj <- ADJUSTED_SALARY(c_nurse_3_outside_hr, c_nurse_3_outside_yr)
-  c_hpp_hr_adj <- ADJUSTED_SALARY(c_hpp_outside_hr, c_hpp_outside_yr)
+  c_hpp_hr_adj     <- ADJUSTED_SALARY(c_hpp_outside_hr, c_hpp_outside_yr)
+  
+  n_phleb <- 3
+  n_drive <- 2
   
   C_PEOPLE <- (c_nurse_7_hr_adj + c_hpp_hr_adj) * TSITE + c_nurse_3_hr_adj * T_ADMIN
-  C_OTHER <- C_TESTS + c_inc_meet_BIRM + (3 * c_phleb + 2 * c_drive * d_site) * n_days
+  C_OTHER <- C_TESTS + c_inc_meet_BIRM + (n_phleb * c_phleb + n_drive * c_drive * d_site) * n_days
   
   return(C_PEOPLE + C_OTHER)
 }
@@ -178,10 +182,13 @@ CSITE_SCREEN_NURSE <- function(n_id,
   
   c_nurse_7_hr_adj <- ADJUSTED_SALARY(c_nurse_7_outside_hr, c_nurse_7_outside_yr)
   c_nurse_3_hr_adj <- ADJUSTED_SALARY(c_nurse_3_outside_hr, c_nurse_3_outside_yr)
-  c_hpp_hr_adj <- ADJUSTED_SALARY(c_hpp_outside_hr, c_hpp_outside_yr)
+  c_hpp_hr_adj     <- ADJUSTED_SALARY(c_hpp_outside_hr, c_hpp_outside_yr)
   
-  C_PEOPLE <- ((4 * c_nurse_7_hr_adj + c_hpp_hr_adj) * TSITE + c_nurse_3_hr_adj * T_ADMIN)
-  C_OTHER <- C_TESTS + c_inc_meet_BIRM + (5 * c_drive * d_site)
+  n_nurse <- 4
+  n_drive <- 5
+  
+  C_PEOPLE <- ((n_nurse * c_nurse_7_hr_adj + c_hpp_hr_adj) * TSITE + c_nurse_3_hr_adj * T_ADMIN)
+  C_OTHER <- C_TESTS + c_inc_meet_BIRM + (n_drive * c_drive * d_site)
   
   return(C_PEOPLE + C_OTHER)
 }
@@ -208,8 +215,10 @@ total_year_cost <- function(inc_sample,
                             screen_per_inc,
                             ltbi_per_inc){
   
-  if (id_per_inc < screen_per_inc) stop("can't have more screened than identified", call. = FALSE)
-  if (screen_per_inc < ltbi_per_inc) stop("can't have more ltbi than screened", call. = FALSE)
+  if (id_per_inc < screen_per_inc)
+    stop("can't have more screened than identified", call. = FALSE)
+  if (screen_per_inc < ltbi_per_inc)
+    stop("can't have more ltbi than screened", call. = FALSE)
   
   invite_cost <- PATH_INVITE_BIRM(id_per_inc, screen_per_inc, ltbi_per_inc)
   site_cost <- PATH_SITE_BIRM(id_per_inc, screen_per_inc, ltbi_per_inc)
