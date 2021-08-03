@@ -55,7 +55,7 @@ tab_dat <-
 # tab_dat$latent <- paste(tab_dat$latent, " (", round(tab_dat$latent/tab_dat$screen, 2), ")", sep = "")
 # tab_dat$screen <- paste(tab_dat$screen, " (", round(tab_dat$screen/tab_dat$identified, 2), ")", sep = "")
 
-## for Excel  ---
+## for Excel
 ## proportions and 'per' counts in separate columns
 tab_dat$platent <- round(tab_dat$latent/tab_dat$screen, 2)
 tab_dat$pscreen <- round(tab_dat$screen/tab_dat$identified, 2)
@@ -113,19 +113,90 @@ write.csv(tab_datb, file = here::here("paper_datatable_boot.csv"))
 
 tab_per_inc <- read.csv(file = here::here("data", "boot_mean_per_inc.csv"))
 
+
 paper_table <-
   cbind.data.frame(
     setting = tab_per_inc$setting,
-    incidents = paste0(round(tab_per_inc$mu_inc, 2), " (", tab_per_inc$lCI_inc, ", ", tab_per_inc$uCI_inc, ")"),
-    identified = paste0(round(tab_per_inc$mu_id_per_inc, 2), " (", tab_per_inc$lCI_id_per_inc, ", ", tab_per_inc$uCI_id_per_inc, ")"),
-    screened = paste0(tab_per_inc$mu_s, " (", tab_per_inc$lCI_s, ", ", tab_per_inc$uCI_s, ")"),
-    pscreened = paste0(tab_per_inc$mu_pscreen, " (", tab_per_inc$lCI_pscreen, ", ", tab_per_inc$uCI_pscreen, ")"),
-    ltbi = paste0(tab_per_inc$mu_ltbi, " (", tab_per_inc$lCI_ltbi, ", ", tab_per_inc$uCI_ltbi, ")"),
-    pltbi = paste0(tab_per_inc$mu_platent, " (", tab_per_inc$lCI_platent, ", ", tab_per_inc$uCI_platent, ")"),
-    total_cost = paste0(round(tab_per_inc$mu_cost, 2), " (", tab_per_inc$lCI_cost, ", ", tab_per_inc$uCI_cost, ")"),
-    cost_per_id = paste0(round(tab_per_inc$mu_cost_per_id, 2), " (", tab_per_inc$lCI_cost_per_id, ", ", tab_per_inc$uCI_cost_per_id, ")"),
-    cost_per_screen = paste0(round(tab_per_inc$mu_cost_per_screen, 2), " (", tab_per_inc$lCI_cost_per_screen, ", ", tab_per_inc$uCI_cost_per_screen, ")"),
-    cost_per_ltbi = paste0(round(tab_per_inc$mu_cost_per_ltbi, 2), " (", tab_per_inc$lCI_cost_per_ltbi, ", ", tab_per_inc$uCI_cost_per_ltbi, ")")
+    incidents = paste0(
+      round(tab_per_inc$mu_inc, 2),
+      " (",
+      tab_per_inc$lCI_inc,
+      ", ",
+      tab_per_inc$uCI_inc,
+      ")"
+    ),
+    identified = paste0(
+      round(tab_per_inc$mu_id_per_inc, 2),
+      " (",
+      tab_per_inc$lCI_id_per_inc,
+      ", ",
+      tab_per_inc$uCI_id_per_inc,
+      ")"
+    ),
+    screened = paste0(
+      tab_per_inc$mu_s,
+      " (",
+      tab_per_inc$lCI_s,
+      ", ",
+      tab_per_inc$uCI_s,
+      ")"
+    ),
+    pscreened = paste0(
+      tab_per_inc$mu_pscreen,
+      " (",
+      tab_per_inc$lCI_pscreen,
+      ", ",
+      tab_per_inc$uCI_pscreen,
+      ")"
+    ),
+    ltbi = paste0(
+      tab_per_inc$mu_ltbi,
+      " (",
+      tab_per_inc$lCI_ltbi,
+      ", ",
+      tab_per_inc$uCI_ltbi,
+      ")"
+    ),
+    pltbi = paste0(
+      tab_per_inc$mu_platent,
+      " (",
+      tab_per_inc$lCI_platent,
+      ", ",
+      tab_per_inc$uCI_platent,
+      ")"
+    ),
+    total_cost = paste0(
+      round(tab_per_inc$mu_cost, 2),
+      " (",
+      tab_per_inc$lCI_cost,
+      ", ",
+      tab_per_inc$uCI_cost,
+      ")"
+    ),
+    cost_per_id = paste0(
+      round(tab_per_inc$mu_cost_per_id, 2),
+      " (",
+      tab_per_inc$lCI_cost_per_id,
+      ", ",
+      tab_per_inc$uCI_cost_per_id,
+      ")"
+    ),
+    cost_per_screen = paste0(
+      round(tab_per_inc$mu_cost_per_screen, 2),
+      " (",
+      tab_per_inc$lCI_cost_per_screen,
+      ", ",
+      tab_per_inc$uCI_cost_per_screen,
+      ")"
+    ),
+    cost_per_ltbi = paste0(
+      round(tab_per_inc$mu_cost_per_ltbi, 2),
+      " (",
+      tab_per_inc$lCI_cost_per_ltbi,
+      ", ",
+      tab_per_inc$uCI_cost_per_ltbi,
+      ")"
+    )
   )
 
 paper_table

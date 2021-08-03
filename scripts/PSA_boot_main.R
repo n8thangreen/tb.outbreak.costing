@@ -55,3 +55,5 @@ saveRDS(out, file = here::here("data", "cost_boot_setting.Rds"))
 par(mfrow = c(2,3))
 map(out, hist, breaks = 20)
 map(out, summary)
+
+
