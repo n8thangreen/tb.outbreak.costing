@@ -31,7 +31,9 @@ summarise_dat <- function(dat_long) {
 
 cost_per_inc <-
   readxl::read_excel(
-    path = here::here("TB outbreak costing/costing xls tools/TB_incident_contact_tracing_costing/151019-TB_incident_contact_tracing_costing-Birmingham.xlsm"),
+    path = here::here("TB outbreak costing/costing xls tools/
+                      TB_incident_contact_tracing_costing/
+                      151019-TB_incident_contact_tracing_costing-Birmingham.xlsm"),
     sheet = "PSA_total",
     range = "A1:CL52")
 
@@ -172,7 +174,7 @@ ee +
   geom_boxplot() +
   facet_wrap(~ year, scales = "free") +  # different y-axis scales for each plot
   theme_bw() +
-  ylab("Total cost (£)") +
+  ylab("Total cost (?)") +
   xlab("Setting") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 

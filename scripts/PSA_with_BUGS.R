@@ -7,6 +7,7 @@
 
 library(dplyr)
 library(purrr)
+library(ggplot2)
 
 # load parameter values
 source("scripts/model_data.R")
@@ -43,16 +44,14 @@ saveRDS(out, file = here::here("data", "cost_BUGS_setting.Rds"))
 # output #
 ##########
 
-library(ggplot2)
-
 c_samples_by_setting <-
   do.call(cbind.data.frame, out) %>%
   melt(value.name = "cost",
        variable.name = "setting")
 
 ggplot(c_samples_by_setting, aes(x = cost)) +
-  facet_wrap(~setting, scales="free") +
-  geom_histogram(color="black", fill="white", binwidth = 6e3) +
+  facet_wrap(~setting, scales = "free") +
+  geom_histogram(color = "black", fill = "white", binwidth = 6e3) +
   xlim(0,2e5)
 
 ggsave(filename = "plots/posterior_setting_cost_hist.png",
