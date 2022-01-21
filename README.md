@@ -1,4 +1,4 @@
-## TB Outbreak Costing
+## Bayesian TB incident contact investigation costing
 
 This repo contains the R code to calculate TB outbreak costing using data from incidents in Birmingham, UK.
 
