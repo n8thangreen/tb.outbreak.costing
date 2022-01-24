@@ -9,7 +9,10 @@
 
 library(ggplot2)
 
+dat <- read.csv("data/cleaned_data.csv", check.names = FALSE)
 load(file = "data/BUGS_output.RData")
+
+R2WinBUGS::attach.bugs(res_bugs$BUGSoutput)
 
 grid <- 
   expand.grid(
@@ -49,8 +52,15 @@ title("n ltbi")
 
 #######################
 
-stan_forest_plot(res_bugs, parms = "p_ltbi")
-stan_forest_plot(res_bugs, parms = "p_screen")
-stan_forest_plot(res_bugs, parms = "rate_id")
-stan_forest_plot(res_bugs, parms = "rate_inc")
+stan_forest_plot(res_bugs, param = "p_ltbi")
+ggsave("plots/p_ltbi_forest_plot.png", width = 30, height = 20, units = "cm", dpi = 640)
+
+stan_forest_plot(res_bugs, param = "p_screen")
+ggsave("plots/p_screen_forest_plot.png", width = 30, height = 20, units = "cm", dpi = 640)
+
+stan_forest_plot(res_bugs, param = "rate_id") + xlab("Number identified")
+ggsave("plots/rate_id_forest_plot.png", width = 30, height = 20, units = "cm", dpi = 640)
+
+stan_forest_plot(res_bugs, param = "rate_inc") + xlab("Number of incidents")
+ggsave("plots/rate_inc_forest_plot.png", width = 30, height = 20, units = "cm", dpi = 640)
 
