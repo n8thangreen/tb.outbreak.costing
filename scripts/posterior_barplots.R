@@ -101,8 +101,6 @@ ggplot(line_dat,
   theme(axis.text = element_text(size = 12),
         axis.title = element_text(size = 14))
 
-ggsave(filename = "plots/birmingham_cascade.png",
-       width = 20, height = 20, units = "cm")
 
 # bar plots ---
 
@@ -121,9 +119,6 @@ ggplot(bar_dat, aes(x = year_setting, y = identified)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_y_continuous(breaks = round(seq(min(bar_dat$identified), max(bar_dat$identified), by = 200), 1))
 
-ggsave(filename = "plots/birmingham_identified_barplot.png",
-       width = 20, height = 20, units = "cm")
-
 
 ### screen
 ggplot(bar_dat, aes(x = year_setting, y = screen)) +
@@ -140,8 +135,6 @@ ggplot(bar_dat, aes(x = year_setting, y = screen)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_y_continuous(breaks = round(seq(min(bar_dat$screen), max(bar_dat$screen), by = 200), 1))
 
-ggsave(filename = "plots/birmingham_screened_barplot.png",
-       width = 20, height = 20, units = "cm")
 
 ### latent
 ggplot(bar_dat, aes(x = year_setting, y = latent)) +
@@ -158,9 +151,6 @@ ggplot(bar_dat, aes(x = year_setting, y = latent)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_y_continuous(breaks = round(seq(min(bar_dat$latent), max(bar_dat$latent), by = 10), 1))
 
-ggsave(filename = "plots/birmingham_latent_barplot.png",
-       width = 20, height = 20, units = "cm")
-
 ### incidents
 ggplot(bar_dat, aes(x = year_setting, y = incidents)) +
   geom_bar(stat = "identity", fill = as.numeric(as.factor(bar_dat$setting)), colour = "white") +
@@ -175,9 +165,6 @@ ggplot(bar_dat, aes(x = year_setting, y = incidents)) +
   ylab("Number of incidents") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   scale_y_continuous(breaks = round(seq(min(bar_dat$incidents), max(bar_dat$incidents), by = 1), 1))
-
-ggsave(filename = "plots/birmingham_incidents_barplot.png",
-       width = 20, height = 20, units = "cm")
 
 
 ##########################
@@ -199,9 +186,6 @@ ggplot() +
   ylab("Percentage") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-ggsave(filename = "plots/stacked_barplot_percent.png",
-       width = 20, height = 20, units = "cm")
-
 # total counts
 ggplot() +
   geom_bar(aes(y = count, x = year_setting, fill = variable),
@@ -217,8 +201,5 @@ ggplot() +
   xlab("") +
   ylab("Count") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
-
-ggsave(filename = "plots/stacked_barplot_counts.png",
-       width = 20, height = 20, units = "cm")
 
 
