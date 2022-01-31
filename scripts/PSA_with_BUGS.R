@@ -4,6 +4,8 @@
 # for probabilities and counts
 # duplicating Excel model for comparison
 
+##TODO: is this total annual cost per setting only?
+##      also do cost per incident per setting
 
 library(dplyr)
 library(purrr)
@@ -33,22 +35,24 @@ for (s in seq_len(num_settings)) {
   }
 }
 
-dat <- read.csv("data/cleaned_data.csv", check.names = FALSE)
+dat <- read.csv("input_data/cleaned_data.csv", check.names = FALSE)
 
 names(out) <- levels(as.factor(dat$setting))
 
-saveRDS(out, file = here::here("data", "cost_BUGS_setting.Rds"))
+saveRDS(out, file = here::here("input_data", "cost_BUGS_setting.Rds"))
 
 
 ##########
 # output #
 ##########
+# out <- load(here::here("input_data", "cost_BUGS_setting.Rds"))
 
 c_samples_by_setting <-
   do.call(cbind.data.frame, out) %>%
   melt(value.name = "cost",
        variable.name = "setting")
 
+# histogram total cost per setting
 ggplot(c_samples_by_setting, aes(x = cost)) +
   facet_wrap(~setting, scales = "free") +
   geom_histogram(color = "black", fill = "white", binwidth = 6e3) +
