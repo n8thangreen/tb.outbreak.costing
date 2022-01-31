@@ -73,7 +73,7 @@ stack_dat <- stack_dat[!stack_dat$year %in% c(2010, 2011, 2012), ]
 stack_dat <- 
   stack_dat %>% 
   mutate(screen_per_inc = screenonly/incidents,
-         ltbi_per_inc = latent/incidents,
+         latent_per_inc = latent/incidents,
          id_per_inc = identifiedonly/incidents)
 
 stack_long <-
@@ -104,7 +104,8 @@ ggplot(line_dat,
 ggsave(filename = "plots/birmingham_cascade.png",
        width = 20, height = 20, units = "cm")
 
-# bar plots ---
+######################
+# bar plots
 
 ### identified
 ggplot(bar_dat, aes(x = year_setting, y = identified)) +
@@ -197,9 +198,30 @@ ggplot() +
         panel.spacing = unit(0,"cm")) +
   xlab("") +
   ylab("Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Group")
 
 ggsave(filename = "plots/stacked_barplot_percent.png",
+       width = 20, height = 20, units = "cm")
+
+# total counts per year
+ggplot() +
+  geom_bar(aes(y = count, x = year_setting, fill = variable),
+           data = stack_long, stat = "identity") +
+  # scale_y_continuous(labels = scales::percent_format()) +
+  scale_x_discrete(breaks = stack_long$year_setting, labels = stack_long$setting,
+                   expand = c(0.1, 0.1)) +
+  facet_grid(~ year, space = "free_x", scales = "free_x", switch = "x") +
+  theme_bw() +
+  theme(strip.placement = "outside",
+        strip.background = element_rect(fill = NA, color = NA),
+        panel.spacing = unit(0,"cm")) +
+  xlab("") +
+  ylab("Count") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Group")
+
+ggsave(filename = "plots/stacked_barplot_counts_year.png",
        width = 20, height = 20, units = "cm")
 
 # total counts
@@ -216,7 +238,8 @@ ggplot() +
         panel.spacing = unit(0,"cm")) +
   xlab("") +
   ylab("Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(fill = "Group")
 
 ggsave(filename = "plots/stacked_barplot_counts.png",
        width = 20, height = 20, units = "cm")
