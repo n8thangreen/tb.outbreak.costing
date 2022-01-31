@@ -14,7 +14,7 @@ library(dplyr)
 
 
 # dat <- readxl::read_xlsx(here::here("TB outbreak costing/data/Birmingham/incidents.xlsx"))
-dat <- readxl::read_xlsx(here::here("TB outbreak costing/data/Birmingham/incidents2.xlsx"), sheet = 2)
+dat <- readxl::read_xlsx(here::here("../../data/Birmingham/incidents2.xlsx"), sheet = 2)
 
 ########
 # prep #

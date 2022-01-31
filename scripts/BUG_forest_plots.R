@@ -1,11 +1,7 @@
 
-#########
-# plots #
-#########
-
-
-##TODO: improve these plots
-##      use the ggplot functions from mcmc stan work
+################
+# forest plots #
+################
 
 library(ggplot2)
 
@@ -50,7 +46,9 @@ mcmcplots::caterplot(res_bugs, parms = c("pred_n_ltbi"), reorder = FALSE,
                      labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-4,20))
 title("n ltbi")
 
-#######################
+
+###########################
+# bespoke clearer plots
 
 stan_forest_plot(res_bugs, param = "p_ltbi")
 ggsave("plots/p_ltbi_forest_plot.png", width = 30, height = 20, units = "cm", dpi = 640)
