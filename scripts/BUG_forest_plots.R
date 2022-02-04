@@ -1,12 +1,15 @@
 
-################
-# forest plots #
-################
+#############################
+# posterior forest plots
+
 
 library(ggplot2)
+library(grid)
+library(gridExtra)
 
-dat <- read.csv("data/cleaned_data.csv", check.names = FALSE)
-load(file = "data/BUGS_output.RData")
+
+dat <- read.csv(here::here("input_data/cleaned_data.csv"), check.names = FALSE)
+load(file = here::here("input_data/BUGS_output.RData"))
 
 R2WinBUGS::attach.bugs(res_bugs$BUGSoutput)
 
@@ -61,4 +64,18 @@ ggsave("plots/rate_id_forest_plot.png", width = 30, height = 20, units = "cm", d
 
 stan_forest_plot(res_bugs, param = "rate_inc") + xlab("Number of incidents")
 ggsave("plots/rate_inc_forest_plot.png", width = 30, height = 20, units = "cm", dpi = 640)
+
+
+## setting only
+fp_ltbi <- stan_forest_plot_setting(res_bugs, param = "sp_ltbi", title = "Probability LTBI")
+fp_screen <- stan_forest_plot_setting(res_bugs, param = "sp_screen", title = "Probability Screened")
+fp_id <- stan_forest_plot_setting(res_bugs, param = "srate_id", title = "Identification rate")
+fp_inc <- stan_forest_plot_setting(res_bugs, param = "srate_inc", title = "Incident rate")
+fp_nscreen <- stan_forest_plot_setting(res_bugs, param = "pred_n_screen", title = "Number screened")
+fp_nltbi <- stan_forest_plot_setting(res_bugs, param = "pred_n_ltbi", title = "Number LTBI")
+
+
+fp <- grid_arrange_shared_legend(fp_ltbi, fp_screen, fp_id, fp_inc, fp_nscreen, fp_nltbi, nrow = 2, ncol = 3)
+
+ggsave(plot = fp, here::here("plots/forest_plot_setting.png"), width = 40, height = 30, units = "cm", dpi = 640)
 
