@@ -10,7 +10,7 @@
 library(dplyr)
 library(reshape2)
 
-dat <- read.csv(file = "../data/cost_per_person.csv")
+dat <- read.csv(file = here::here("output_data/cost_per_person.csv"))
 
 
 plot_dat <-
@@ -34,6 +34,8 @@ plot_dat$setting <-
 
 names(plot_dat)[names(plot_dat) == "setting"] <- "Setting"
 
+# cascade line plot
+
 ggplot(plot_dat,
        aes(x = variable, y = value, colour = Setting, group = Setting)) +
   scale_y_continuous(trans = 'log2') +  # log scale
@@ -42,4 +44,44 @@ ggplot(plot_dat,
   geom_line() +
   theme_bw() +
   xlab("") + ylab("Cost per person (?)")
+
+
+
+############################
+# posteriors
+
+# source("posterior_barplot.R")
+
+plot_dat <- 
+  plot_dat %>% 
+  mutate(param = factor(param, levels = c("srate_id", "pred_n_screen", "pred_n_ltbi")),
+         value = as.numeric(value),
+         total_per_year = value*n_inc)
+
+# cascade of counts
+ggplot(plot_dat,
+       aes(x = param, y = total_per_year, group = variable, colour = variable)) +
+       # aes(x = param, y = value, group = variable, colour = variable)) +
+  geom_point() +
+  geom_line() +
+  theme_bw() +
+  xlab("") + ylab("Number of individuals") +
+  theme(axis.text = element_text(size = 12),
+        axis.title = element_text(size = 14))
+
+ggsave(filename = here::here("plots/posterior_counts_cascade.png"),
+       width = 20, height = 20, units = "cm")
+
+
+## costs
+out_total <- load(file = here::here("input_data", "cost_BUGS_setting.Rds"))
+out_per_inc <- load(file = here::here("input_data", "cost_BUGS_setting_per_inc.Rds"))
+
+load(here::here("input_data/BUGS_output.RData"))
+mcmc_dat <- res_bugs$BUGSoutput$sims.list
+
+
+
+
+
 

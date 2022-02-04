@@ -37,7 +37,7 @@ bar_dat <-
 bar_dat$year_setting <- factor(bar_dat$year_setting,
                                levels = bar_dat$year_setting, ordered = TRUE)
 
-write.csv(bar_dat, file = "bar_dat.csv")
+write.csv(bar_dat, file = here::here("input_data", "bar_dat.csv"))
 
 
 # sum within years only for all setting totals

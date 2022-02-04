@@ -90,6 +90,6 @@ tab <-
              value = as.matrix(params),
              row.names = NULL)
 
-write.csv(as.matrix(tab), file = "data/param_vals.csv")
+# write.csv(as.matrix(tab), file = here::here("input_data/param_vals.csv"))
 
 rm(params, tab)
