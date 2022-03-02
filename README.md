@@ -26,8 +26,10 @@ Originally this model was implemented in Excel and VBA [here](https://github.com
 A Shiny app running this model can be accessed [here](https://n8thangreen.shinyapps.io/incidentCostingShiny/).
 The GitHub repo for this is [here](https://github.com/n8thangreen/incidentCostingShiny).
 
+### Folder structure
+
 Folder | Purpose
 ---|---
-[`data`](data/) | Results data
+[`output_data`](output_data/) | Results data
 [`BUGS`](BUGS/) | BUGS code and R script to run it
 
