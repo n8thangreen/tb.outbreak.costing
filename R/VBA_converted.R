@@ -1,6 +1,7 @@
 
 #' ADJUSTED_SALARY
-#'
+#' 
+#' per hour
 #' take into account pension and
 #' national insurance contributions
 #' 
@@ -194,7 +195,7 @@ CSITE_SCREEN_NURSE <- function(n_id,
 }
 
 
-#' total_year_cost
+#' Total cost per year
 #'
 #' this is the main overall cost function.
 #' 
@@ -228,7 +229,7 @@ total_year_cost <- function(inc_sample,
 }
 
 
-#' vectorised costs
+#' Vectorised costs
 #' in order to use in mutate()
 #' @export
 #' 
