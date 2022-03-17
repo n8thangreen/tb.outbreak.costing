@@ -79,18 +79,26 @@ write.csv(tab_pop, file = here::here("output_data/pop_summary_table.csv"))
 ###################
 # costs
 
-c_dat <- do.call(cbind, out)
+out_total <- readRDS(here::here("input_data", "cost_BUGS_setting.Rds"))
+out_per_inc <- readRDS(here::here("input_data", "cost_BUGS_setting_per_inc.Rds"))
+
+c_per_inc <- do.call(cbind, out_per_inc)
+c_total <- do.call(cbind, out_total)
 
 tab_cost <- 
   data.frame(
-    total = paste0(round(apply(c_dat, 2, mean),0), " (",
-                   round(apply(c_dat, 2, sd),0), ")"),
-    pp_id = paste0(round(apply(c_dat/mcmc_dat$srate_id, 2, mean),0), " (",
-                   round(apply(c_dat/mcmc_dat$srate_id, 2, sd),0), ")"),
-    pp_screen = paste0(round(apply(c_dat/mcmc_dat$pred_n_screen, 2, mean),0), " (",
-                       round(apply(c_dat/mcmc_dat$pred_n_screen, 2, sd),0), ")"),
-    pp_ltbi = paste0(round(apply(c_dat/mcmc_dat$pred_n_ltbi, 2, mean),0), " (",
-                     round(apply(c_dat/mcmc_dat$pred_n_ltbi, 2, sd),0), ")"))
+    cost_total = paste0(round(apply(c_total, 2, mean),0), " (",
+                        round(apply(c_total, 2, sd),0), ")"),
+    cost_per_inc = paste0(round(apply(c_per_inc, 2, mean),0), " (",
+                          round(apply(c_per_inc, 2, sd),0), ")"),
+    pp_id = paste0(round(apply(c_per_inc/mcmc_dat$srate_id, 2, mean),0), " (",
+                   round(apply(c_per_inc/mcmc_dat$srate_id, 2, sd),0), ")"),
+    pp_screen = paste0(round(apply(c_per_inc/mcmc_dat$pred_n_screen, 2, mean),0), " (",
+                       round(apply(c_per_inc/mcmc_dat$pred_n_screen, 2, sd),0), ")"),
+    pp_ltbi = paste0(round(apply(c_per_inc/mcmc_dat$pred_n_ltbi, 2, mean),0), " (",
+                     round(apply(c_per_inc/mcmc_dat$pred_n_ltbi, 2, sd),0), ")"))
 
-write.csv(tab_cost, file = here::here("output_data/cost_summary_table.csv"))
+tab_cost
+
+write.csv(tab_cost, file = here::here("output_data", "cost_summary_table.csv"))
 
