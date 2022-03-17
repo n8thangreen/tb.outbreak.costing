@@ -39,8 +39,11 @@ t_phone_preRA <<- 0.25
 t_site_screen <<- 7.5
 
 d_site <<- 20           # average total distance to/from site
-t_meet_review <<- 1     # review meeting duration
-t_incid_meet <<- 1      # incident meeting duration
+
+t_rev_meet <<- 1        # review meeting duration
+t_inc_meet <<- 1        # incident meeting duration
+
+
 max_screen <<- 100      # maximum number screened per day
 p_site_screen <<- 0.9   # proportion of screening event that are site visits
 c_fup_appt <<- 59.96*(1.035)^2    # follow-up appointment cost (2016)
@@ -51,7 +54,9 @@ c_TST <<- 1.32          # unit cost of skin test
 
 
 ## salaries
+# inside/outside London
 
+# MD
 c_TBphys_outside_yr <<- 86449
 c_TBphys_outside_hr <<- 44.33
 
@@ -70,8 +75,17 @@ c_nurse_7_outside_hr <<- 17.34
 c_nurse_lead_outside_yr <<- 43469
 c_nurse_lead_outside_hr <<- 22.23
 
-c_inc_meet_BIRM <<- 148.62
-c_meeting_review_BIRM <<- 148.62
+
+c_inc_meet_BIRM <<-
+  t_inc_meet*ADJUSTED_SALARY(
+    c_TBphys_outside_hr + c_hpp_outside_hr + c_nurse_lead_outside_hr + 2*c_nurse_6_outside_hr,
+    c_TBphys_outside_yr + c_hpp_outside_yr + c_nurse_lead_outside_yr + 2*c_nurse_6_outside_yr)
+
+c_meeting_review_BIRM <<-
+  t_rev_meet*ADJUSTED_SALARY(
+    c_TBphys_outside_hr + c_hpp_outside_hr + c_nurse_lead_outside_hr + 2*c_nurse_6_outside_hr,
+    c_TBphys_outside_yr + c_hpp_outside_yr + c_nurse_lead_outside_yr + 2*c_nurse_6_outside_yr)
+
 c_meeting_weekly <<- 43.58
 
 
