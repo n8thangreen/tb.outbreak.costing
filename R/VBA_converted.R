@@ -34,7 +34,7 @@ PATH_INVITE_BIRM <- function(n_id,
                              n_latent) {
   
   # risk assessment
-  RA <- c_inc_meet_BIRM + c_phoneRA_BIRM + c_siteRA_BIRM
+  RA <- c_inc_meet_BIRM + c_phoneRA_BIRM() + c_siteRA_BIRM()
   screen <-
     CINVITE_SCREEN(n_id, n_screen) + CFUP(n_latent) + c_meeting_review_BIRM
   
@@ -90,7 +90,7 @@ PATH_SITE_BIRM <- function(n_id,
                            n_latent,
                            phleb_thresh = 25) {
   
-  RA <- c_inc_meet_BIRM + c_phoneRA_BIRM + c_siteRA_BIRM
+  RA <- c_inc_meet_BIRM + c_phoneRA_BIRM() + c_siteRA_BIRM()
   
   if (n_screen > phleb_thresh) {
     screen <- CSITE_SCREEN_PHLEB(n_id, n_screen)

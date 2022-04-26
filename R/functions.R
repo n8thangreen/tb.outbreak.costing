@@ -94,3 +94,10 @@ include_year_totals <- function(sample_dat){
     arrange(year)
 }
 
+
+# derived model values
+
+c_phoneRA_BIRM <- function() t_phone_preRA*(c_nurse_7_outside_hr + (c_nurse_7_outside_yr - NI_min)*p_pensionNI/(days_2018*7.5))
+
+c_siteRA_BIRM <- function() 2*t_siteRA*(c_nurse_7_outside_hr + (c_nurse_7_outside_yr - NI_min)*p_pensionNI/(days_2018*7.5)) + 2*c_drive*d_site
+

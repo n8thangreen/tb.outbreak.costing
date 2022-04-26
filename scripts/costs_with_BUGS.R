@@ -78,7 +78,7 @@ ggplot(c_samples_by_setting, aes(x = cost)) +
   facet_wrap(~setting, scales = "free") +
   # geom_histogram(color = "black", fill = "white", binwidth = 6e3) +
   geom_histogram(aes(y = ..density..),  colour = 1, fill = "white") +
-  geom_density(c(0.7, 0.8))
+  geom_density() #c(0.7, 0.8))
 
 ggsave(filename = here::here("plots/posterior_setting_cost_hist_per_ltbi.png"),
        width = 20, height = 20, units = "cm")
