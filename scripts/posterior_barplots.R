@@ -63,7 +63,7 @@ plot_dat <-
 ##########################
 ## per incident
 
-# percent
+# stacked barplot posterior_percent
 ggplot() +
   geom_bar(aes(y = group_only, x = variable, fill = param),
            data = plot_dat, position = "fill", stat = "identity") +
@@ -71,16 +71,17 @@ ggplot() +
   theme_bw() +
   theme(strip.placement = "outside",
         strip.background = element_rect(fill = NA, color = NA),
-        panel.spacing = unit(0,"cm")) +
+        panel.spacing = unit(0,"cm"),
+        text = element_text(size = 20)) +
   xlab("") +
   ylab("Percentage") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave(filename = "plots/stacked_barplot_posterior_percent.png",
        width = 20, height = 20, units = "cm")
 
 
-# total counts
+# stacked barplot posterior total counts
 ggplot() +
   geom_bar(aes(y = group_only, x = variable, fill = param),
            data = plot_dat, stat = "identity") +

@@ -1,5 +1,6 @@
 
 # PSA_with_BUGS.R:
+# probabilistic sensitivity analysis
 # calculate total cost using BUGS output
 # for probabilities and counts
 # duplicating Excel model for comparison

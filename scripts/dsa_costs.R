@@ -2,7 +2,8 @@
 ##      use mean posterior rather than whole sample
 
 
-# dsa_costs.R:
+# deterministic sensitivity analysis
+# dsa_costs.R
 # calculate total cost using mean BUGS output
 # for probabilities and counts
 
