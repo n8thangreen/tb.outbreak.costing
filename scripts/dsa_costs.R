@@ -118,6 +118,6 @@ library(grid)
 torn_grid <- do.call("grid_arrange_shared_legend", c(ggtorn, ncol = 3, nrow = 2))
 
 ggsave(torn_grid, filename = "plots/tornado_plots.png", dpi = 640,
-       width = 20, height = 20, units = "cm")
+       width = 50, height = 40, units = "cm")
 
   
