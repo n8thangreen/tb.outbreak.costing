@@ -1,10 +1,8 @@
 
-# tables for paper
-
+# tables for paper using BUGS output
 
 library(MCMCvis)
 library(dplyr)
-
 
 load(here::here("input_data/BUGS_output.RData"))
 
@@ -21,28 +19,28 @@ tab_pop_inc <-
     transmute(MCMCsummary(
       res_bugs,
       params = "srate_id",
-      round = 3)[, c("mean", "sd")],
-      n_identify = paste0(mean, " (", sd, ")")),
+      round = 2)[, c("mean", "2.5%", "97.5%")],
+      n_identify = paste0(mean, " (", `2.5%`, "-", `97.5%`, ")")),
     transmute(MCMCsummary(
       res_bugs,
       params = "pred_n_screen",
-      round = 3)[, c("mean", "sd")],
-      n_screen = paste0(mean, " (", sd, ")")),
+      round = 2)[, c("mean", "2.5%", "97.5%")],
+      n_screen = paste0(mean, " (", `2.5%`, "-", `97.5%`, ")")),
     transmute(MCMCsummary(
       res_bugs,
       params = "sp_screen",
-      round = 3)[, c("mean", "sd")],
-      p_screen = paste0(mean, " (", sd, ")")),
+      round = 2)[, c("mean", "2.5%", "97.5%")],
+      p_screen = paste0(mean, " (", `2.5%`, "-", `97.5%`, ")")),
     transmute(MCMCsummary(
       res_bugs,
       params = "pred_n_ltbi",
-      round = 3)[, c("mean", "sd")],
-      n_ltbi = paste0(mean, " (", sd, ")")),
+      round = 2)[, c("mean", "2.5%", "97.5%")],
+      n_ltbi = paste0(mean, " (", `2.5%`, "-", `97.5%`, ")")),
     transmute(MCMCsummary(
       res_bugs,
       params = "sp_ltbi",
-      round = 3)[, c("mean", "sd")],
-      p_ltbi = paste0(mean, " (", sd, ")")))
+      round = 2)[, c("mean", "2.5%", "97.5%")],
+      p_ltbi = paste0(mean, " (", `2.5%`, "-", `97.5%`, ")")))
 
 write.csv(tab_pop_inc, file = here::here("output_data/pop_summary_table_per_inc.csv"))
 
@@ -56,21 +54,25 @@ write.csv(tab_pop_inc, file = here::here("output_data/pop_summary_table_per_inc.
 
 mean_id <- apply(mcmc_dat$srate_inc * mcmc_dat$srate_id, 2, mean)
 sd_id <- apply(mcmc_dat$srate_inc * mcmc_dat$srate_id, 2, sd)
+quantiles_id <- apply(mcmc_dat$srate_inc * mcmc_dat$srate_id, 2, quantile, probs = c(0.025, 0.975))
+
 mean_screen <- apply(mcmc_dat$srate_inc * mcmc_dat$pred_n_screen, 2, mean)
 sd_screen <- apply(mcmc_dat$srate_inc * mcmc_dat$pred_n_screen, 2, sd)
+quantiles_screen <- apply(mcmc_dat$srate_inc * mcmc_dat$pred_n_screen, 2, quantile, probs = c(0.025, 0.975))
+
 mean_ltbi <- apply(mcmc_dat$srate_inc * mcmc_dat$pred_n_ltbi, 2, mean)
 sd_ltbi <- apply(mcmc_dat$srate_inc * mcmc_dat$pred_n_ltbi, 2, sd)
+quantiles_ltbi <- apply(mcmc_dat$srate_inc * mcmc_dat$pred_n_ltbi, 2, quantile, probs = c(0.025, 0.975))
 
 tab_pop <- 
   cbind(
     transmute(MCMCsummary(
       res_bugs,
-      params = "srate_inc",
-      round = 3)[, c("mean", "sd")],
-      n_incidents = paste0(mean, " (", sd, ")")),
-    n_identify = paste0(round(mean_id,3), " (", round(sd_id,3), ")"),
-    n_screen = paste0(round(mean_screen,3), " (", round(sd_screen,3), ")"),
-    n_screen = paste0(round(mean_ltbi,3), " (", round(sd_ltbi,3), ")")
+      params = "srate_inc", round = 2)[, c("mean", "sd")],
+      n_incidents = paste0(mean, " (", round(mean - 1.96*sd,2), "-", round(mean + 1.96*sd,2), ")")),
+    n_identify = paste0(round(mean_id,2), " (", round(quantiles_id[1,],2), "-", round(quantiles_id[2,],2), ")"),
+    n_screen = paste0(round(mean_screen,2), " (", round(quantiles_screen[1,],2), "-", round(quantiles_screen[2,],2), ")"),
+    n_ltbi = paste0(round(mean_ltbi,2), " (", round(quantiles_ltbi[1,],2), "-", round(quantiles_ltbi[2,],2), ")")
     )
 
 write.csv(tab_pop, file = here::here("output_data/pop_summary_table.csv"))
