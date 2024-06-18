@@ -105,3 +105,29 @@ bcea_per_inc <-
 
 ceplane.plot(bcea_per_inc, graph = "ggplot2",
              xlim = c(0, 10), ylim = c(0, 15000))
+
+ceplane.plot(bcea_per_inc, graph = "ggplot2", currency = "£",
+             point= list(color = 1:5, size = 3, shape = rep(19,5)),
+             icer = list(color = "red", size = 5),
+             xlim = c(0, 10), ylim = c(0, 15000))
+
+cols <- RColorBrewer::brewer.pal(n = 5, name = 'Set2')
+
+ceplane <- 
+  ceplane.plot(bcea_per_inc, graph = "ggplot2", currency = "£",
+               point= list(color = cols, size = 2, shape = rep(19,5)),
+               icer = list(color = "red", size = 5), pos = NA,
+               title = "",
+               ylab = "Cost per incident",
+               xlab = "Number of LTBI positive",
+               xlim = c(0, 10), ylim = c(0, 15000), wtp = 1659) +
+  # contour = list(breaks = c(0.7, 0.9)))
+  # contour = list(bins = 4))
+  annotate("text",
+           x = as.vector(colMeans(bcea_per_inc$delta_e)) + c(0.3,0.2,0.3,0.5,0.1),
+           y = as.vector(colMeans(bcea_per_inc$delta_c)) + 600,
+           label = bcea_per_inc$interventions[bcea_per_inc$interventions!=""])
+
+ggsave(ceplane, filename = "plots/ce_plane_per_ltbi2.png", dpi = 640,
+       width = 20, height = 20, units = "cm")
+
