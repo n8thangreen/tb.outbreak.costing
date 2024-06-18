@@ -2,6 +2,8 @@
 
 rm(list = ls())
 
+save_csv <- TRUE
+
 ## on-costs
 
 p_pension18 <<- 0.2060
@@ -18,7 +20,9 @@ d_leave0 <<- 27         # annual leave days
 d_leave5 <<- 29
 d_leave10 <<- 33
 
-d_actual <<- 224
+d_actual <<- 224       # actual working days
+d_actual_hrs <<- 1815  # 37.5*52 = 1950 without holidays and bank holidays 
+
 days_2018 <<- 261       # working-days per year
 NI_min <<- 8632.52      # national insurance
 NI_min_week <<- 166.01
@@ -57,39 +61,40 @@ c_blood <<- 36          # unit cost of IGRA blood test
 c_TST <<- 1.32*(1.035)^4    # 2022
 
 
-## salaries
+###########
+# salaries
 # inside/outside London
 
 # MD
 c_TBphys_outside_yr <<- 86449  # 2018
-c_TBphys_outside_hr <<- 44.33
+c_TBphys_outside_hr <<- c_TBphys_outside_yr/d_actual_hrs
 
 # c_hpp_outside_yr <<- 38765     # 2018
 # c_hpp_outside_hr <<- 19.88
 c_hpp_outside_yr <<- 49218     # 2022
-c_hpp_outside_hr <<- 2517
+c_hpp_outside_hr <<- c_hpp_outside_yr/d_actual_hrs
 
 # c_nurse_3_outside_yr <<- 18157  # 2018
 # c_nurse_3_outside_hr <<- 9.28
 c_nurse_3_outside_yr <<- 20330  # 2022
-c_nurse_3_outside_hr <<- 9.49
+c_nurse_3_outside_hr <<- c_nurse_3_outside_yr/d_actual_hrs
 
 # c_nurse_6_outside_yr <<- 28746  # 2018
 # c_nurse_6_outside_hr <<- 14.70
 c_nurse_6_outside_yr <<- 34172   # 2022
-c_nurse_6_outside_hr <<- 17.48
+c_nurse_6_outside_hr <<- c_nurse_6_outside_yr/d_actual_hrs
 
 # c_nurse_7_outside_yr <<- 33895  # 2018
 # c_nurse_7_outside_hr <<- 17.34
 c_nurse_7_outside_yr <<- 42121   # 2022
-c_nurse_7_outside_hr <<- 21.54
+c_nurse_7_outside_hr <<- c_nurse_7_outside_yr/d_actual_hrs
 
 # c_nurse_lead_outside_yr <<- 43469  # 2018
 # c_nurse_lead_outside_hr <<- 22.23
 c_nurse_lead_outside_yr <<- 47126   # 2022
-c_nurse_lead_outside_hr <<- 24.10
+c_nurse_lead_outside_hr <<- c_nurse_lead_outside_yr/d_actual_hrs
 
-c_meeting_weekly <<- 43.58
+c_meeting_weekly <<- 43.58   ##TODO: what's this?
 
 c_inc_meet_BIRM <<-
   t_inc_meet*ADJUSTED_SALARY(
@@ -104,13 +109,17 @@ c_meeting_review_BIRM <<-
 p_invite <<- 1 - p_site_screen
 odds_advise <<- (1 - p_screen_incid)/p_screen_incid
 
-# # save all as csv table
-# params <- mget(ls())
-# tab <-
-#   data.frame(name = names(params),
-#              value = as.matrix(params),
-#              row.names = NULL)
-# 
-# write.csv(as.matrix(tab), file = here::here("input_data/param_vals.csv"))
+# save all as csv table
+if (save_csv) {
+  rm(save_csv)
+  
+  params <- mget(ls())
+  tab <-
+    data.frame(name = names(params),
+               value = as.matrix(params),
+               row.names = NULL)
+  
+  write.csv(as.matrix(tab), file = here::here("input_data/param_vals.csv"))
+}
 
 rm(params, tab)
