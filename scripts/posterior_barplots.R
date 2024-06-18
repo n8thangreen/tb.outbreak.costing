@@ -1,5 +1,6 @@
 
 # TB incident contact investigation costing study
+# BUGS output
 # N Green
 
 ##TODO: should really do these calcs directly on the posterior
@@ -82,19 +83,23 @@ ggsave(filename = "plots/stacked_barplot_posterior_percent.png",
 
 
 # stacked barplot posterior total counts
+# per incident?
 ggplot() +
   geom_bar(aes(y = group_only, x = variable, fill = param),
            data = plot_dat, stat = "identity") +
-  theme_bw() +
+  theme_minimal() +
   theme(strip.placement = "outside",
         strip.background = element_rect(fill = NA, color = NA),
         panel.spacing = unit(0,"cm")) +
   xlab("") +
-  ylab("Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  ylab("Number of individuals") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  # labs(fill = "Cascade subgroup")
+  scale_fill_discrete(name = "Cascade subgroup",
+                      labels = c("LTBI postive", "Screened", "Identified"))
 
 ggsave(filename = "plots/stacked_barplot_posterior_counts.png",
-       width = 20, height = 20, units = "cm")
+       width = 10, height = 10, units = "cm")
 
 ##########################
 ## per year
@@ -103,13 +108,16 @@ ggsave(filename = "plots/stacked_barplot_posterior_counts.png",
 ggplot() +
   geom_bar(aes(y = value_per_year, x = variable, fill = param),
            data = plot_dat, stat = "identity") +
-  theme_bw() +
+  theme_minimal() +
   theme(strip.placement = "outside",
         strip.background = element_rect(fill = NA, color = NA),
         panel.spacing = unit(0,"cm")) +
   xlab("") +
-  ylab("Count") +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+  ylab("Number of individuals") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  # labs(fill = "Cascade subgroup")
+  scale_fill_discrete(name = "Cascade subgroup",
+                      labels = c("LTBI postive", "Screened", "Identified"))
 
 ggsave(filename = "plots/stacked_barplot_posterior_count_year.png",
-       width = 20, height = 20, units = "cm")
+       width = 10, height = 10, units = "cm")
