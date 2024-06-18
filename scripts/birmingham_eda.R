@@ -184,6 +184,15 @@ ggsave(filename = "plots/birmingham_incidents_barplot.png",
 ##########################
 ## stacked
 
+# Annotation data
+annotation_data <- data.frame(
+  setting = unique(stack_long$setting),
+  variable = unique(stack_long$variable),
+  x = unique(stack_long$year_setting),  # Unique x values
+  y = rep(-15, length(unique(stack_long$year_setting))),  # Adjust y value to be below bars
+  label = 1:length(unique(stack_long$year_setting))
+)
+
 # percent
 ggplot() +
   geom_bar(aes(y = count, x = year_setting, fill = variable),
@@ -217,9 +226,14 @@ ggplot() +
         strip.background = element_rect(fill = NA, color = NA),
         panel.spacing = unit(0,"cm")) +
   xlab("") +
-  ylab("Count") +
+  ylab("Number of individuals") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(fill = "Group")
+  scale_fill_discrete(name = "Cascade subgroup",
+                      labels = c("LTBI postive", "Screened", "Identified")) +
+  geom_text(data = filter(stack_long, variable == "screenonly") , aes(x = year_setting, y = -20, label = count),
+            size = 3, angle = 0, hjust = 0.5) #+
+  # coord_cartesian(clip = "off")
+
 
 ggsave(filename = "plots/stacked_barplot_counts_year.png",
        width = 20, height = 20, units = "cm")
@@ -235,7 +249,7 @@ ggplot() +
   theme_bw() +
   theme(strip.placement = "outside",
         strip.background = element_rect(fill = NA, color = NA),
-        panel.spacing = unit(0,"cm")) +
+        panel.spacing = unit(0, "cm")) +
   xlab("") +
   ylab("Count") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
