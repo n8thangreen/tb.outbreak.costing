@@ -8,6 +8,7 @@ library(grid)
 library(gridExtra)
 
 
+devtools::load_all(".")
 dat <- read.csv(here::here("input_data/cleaned_data.csv"), check.names = FALSE)
 load(file = here::here("input_data/BUGS_output.RData"))
 

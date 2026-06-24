@@ -1,7 +1,6 @@
 
 #' Forest plot using BUGS output
 #'
-#' @importFrom epicontacts, adegenet
 #' @import dplyr ggplot2 tidybayes purrr
 #'
 #' @return

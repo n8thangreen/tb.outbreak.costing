@@ -13,6 +13,7 @@ library(reshape2)
 
 
 # load parameter values
+devtools::load_all(".")
 source(here::here("scripts/model_data.R"))
 load(here::here("input_data/BUGS_output.RData"))
 
@@ -93,7 +94,7 @@ library(BCEA)
 bcea_ltbi <- 
   bcea(as.matrix(cbind(0, -mcmc_dat$pred_n_ltbi)),
        as.matrix(cbind(0, -do.call(cbind.data.frame, out_total))),
-       interventions = c("", names(out_total)))
+       interventions = c("Baseline", names(out_total)))
 
 ceplane.plot(bcea_ltbi, graph = "ggplot2",
              xlim = c(0, 10), ylim = c(0, 100000))
@@ -101,7 +102,7 @@ ceplane.plot(bcea_ltbi, graph = "ggplot2",
 bcea_per_inc <- 
   bcea(as.matrix(cbind(0, -mcmc_dat$pred_n_ltbi)),
        as.matrix(cbind(0, -do.call(cbind.data.frame, out_per_inc))),
-       interventions = c("", names(out_total)))
+       interventions = c("Baseline", names(out_total)))
 
 ceplane.plot(bcea_per_inc, graph = "ggplot2",
              xlim = c(0, 10), ylim = c(0, 15000))
@@ -126,7 +127,7 @@ ceplane <-
   annotate("text",
            x = as.vector(colMeans(bcea_per_inc$delta_e)) + c(0.3,0.2,0.3,0.5,0.1),
            y = as.vector(colMeans(bcea_per_inc$delta_c)) + 600,
-           label = bcea_per_inc$interventions[bcea_per_inc$interventions!=""])
+           label = bcea_per_inc$interventions[bcea_per_inc$interventions != "Baseline"])
 
 ggsave(ceplane, filename = "plots/ce_plane_per_ltbi2.png", dpi = 640,
        width = 20, height = 20, units = "cm")
