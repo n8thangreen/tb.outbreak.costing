@@ -1,0 +1,55 @@
+parameter,value,description
+p_pension18,0.2060,Pension rate 2018
+p_pension19,0.1430,Pension rate 2019 (2022)
+p_admin,0.0008,Admin rate
+p_apprent,0.005,Apprenticeship levy rate
+p_NI,0.1505,National Insurance rate 2022 (0.138 in 2018)
+p_pensionNI,0.3498,Pension and NI rate
+d_avail,253,Available working days
+d_pubhol,8,Public holidays
+d_leave0,27,Annual leave days (0-5 years service)
+d_leave5,29,Annual leave days (5-10 years service)
+d_leave10,33,Annual leave days (10+ years service)
+d_actual,224,Actual working days
+d_actual_hrs,1815,Actual working hours
+days_2018,261,Working days per year 2018
+NI_min,8632.52,National Insurance threshold
+NI_min_week,166.01,National Insurance weekly threshold
+c_phleb,220,Phlebotomy appointment cost
+c_apptnurse,85,Nurse appointment cost 2022 (76 in 2018)
+c_drive,0.50,Travel cost per mile
+t_admin_post,0.25,Admin time post screening
+t_admin_appt,0.33,Admin time per appointment
+t_admin_id,0.25,Admin time per identified case
+admin_job,TB Nurse Band 3,Admin job role
+t_QandA,2,Q&A session duration
+t_inform,0.5,Information session duration
+t_inform_pp,0.33,Information time per person
+t_siteRA,2,Site risk assessment duration
+t_phoneRA,1,Phone risk assessment duration
+t_phone_preRA,0.25,Pre-risk assessment phone time
+t_site_screen,7.5,Site screening duration
+d_site,20,Average distance to site
+t_rev_meet,1,Review meeting duration
+t_inc_meet,1,Incident meeting duration
+max_screen,100,Maximum screened per day
+t_enquire,2,Phone line manning duration
+p_site_screen,0.9,Proportion of site screening events
+p_screen_incid,0.85,Probability screening follows Incident meeting
+c_fup_appt,93,Follow-up appointment cost 2022 (59.96*(1.035)^2 in 2016)
+c_blood,36,IGRA blood test unit cost
+c_TST,1.32 * (1.035)^4,TST skin test unit cost 2022 (1.32 in 2018)
+c_TBphys_outside_yr,86449,TB Physician yearly salary outside London (2018)
+c_TBphys_outside_hr,c_TBphys_outside_yr/d_actual_hrs,TB Physician hourly salary outside London
+c_hpp_outside_yr,49218,Health Protection Practitioner yearly salary outside London (2022)
+c_hpp_outside_hr,c_hpp_outside_yr/d_actual_hrs,Health Protection Practitioner hourly salary
+c_nurse_3_outside_yr,20330,Band 3 Nurse yearly salary outside London (2022)
+c_nurse_3_outside_hr,c_nurse_3_outside_yr/d_actual_hrs,Band 3 Nurse hourly salary
+c_nurse_6_outside_yr,34172,Band 6 Nurse yearly salary outside London (2022)
+c_nurse_6_outside_hr,c_nurse_6_outside_yr/d_actual_hrs,Band 6 Nurse hourly salary
+c_nurse_7_outside_yr,42121,Band 7 Nurse yearly salary outside London (2022)
+c_nurse_7_outside_hr,c_nurse_7_outside_yr/d_actual_hrs,Band 7 Nurse hourly salary
+c_nurse_lead_outside_yr,47126,Lead Nurse yearly salary outside London (2022)
+c_nurse_lead_outside_hr,c_nurse_lead_outside_yr/d_actual_hrs,Lead Nurse hourly salary
+c_meeting_weekly,43.58,Weekly meeting cost
+c_Tx,0,Treatment cost

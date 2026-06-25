@@ -4,79 +4,51 @@
 #' @export
 pkg_env <- new.env(parent = emptyenv())
 
-# Populate default values
-pkg_env$p_pension18 <- 0.2060
-pkg_env$p_pension19 <- 0.1430
-pkg_env$p_admin <- 0.0008
-pkg_env$p_apprent <- 0.005
-pkg_env$p_NI <- 0.1505
-pkg_env$p_pensionNI <- 0.3498
-pkg_env$d_avail <- 253
-pkg_env$d_pubhol <- 8
-pkg_env$d_leave0 <- 27
-pkg_env$d_leave5 <- 29
-pkg_env$d_leave10 <- 33
-pkg_env$d_actual <- 224
-pkg_env$d_actual_hrs <- 1815
-pkg_env$days_2018 <- 261
-pkg_env$NI_min <- 8632.52
-pkg_env$NI_min_week <- 166.01
-pkg_env$c_phleb <- 220
-pkg_env$c_apptnurse <- 85
-pkg_env$c_drive <- 0.50
-pkg_env$t_admin_post <- 0.25
-pkg_env$t_admin_appt <- 0.33
-pkg_env$t_admin_id <- 0.25
-pkg_env$admin_job <- "TB Nurse Band 3"
-pkg_env$t_QandA <- 2
-pkg_env$t_inform <- 0.5
-pkg_env$t_inform_pp <- 0.33
-pkg_env$t_siteRA <- 2
-pkg_env$t_phoneRA <- 1
-pkg_env$t_phone_preRA <- 0.25
-pkg_env$t_site_screen <- 7.5
-pkg_env$d_site <- 20
-pkg_env$t_rev_meet <- 1
-pkg_env$t_inc_meet <- 1
-pkg_env$max_screen <- 100
-pkg_env$t_enquire <- 2
-pkg_env$p_site_screen <- 0.9
-pkg_env$p_screen_incid <- 0.85
-pkg_env$c_fup_appt <- 93
-pkg_env$c_blood <- 36
-pkg_env$c_TST <- 1.32 * (1.035)^4
-pkg_env$c_TBphys_outside_yr <- 86449
-pkg_env$c_TBphys_outside_hr <- 86449/1815
-pkg_env$c_hpp_outside_yr <- 49218
-pkg_env$c_hpp_outside_hr <- 49218/1815
-pkg_env$c_nurse_3_outside_yr <- 20330
-pkg_env$c_nurse_3_outside_hr <- 20330/1815
-pkg_env$c_nurse_6_outside_yr <- 34172
-pkg_env$c_nurse_6_outside_hr <- 34172/1815
-pkg_env$c_nurse_7_outside_yr <- 42121
-pkg_env$c_nurse_7_outside_hr <- 42121/1815
-pkg_env$c_nurse_lead_outside_yr <- 47126
-pkg_env$c_nurse_lead_outside_hr <- 47126/1815
-pkg_env$c_meeting_weekly <- 43.58
-pkg_env$c_Tx <- 0
+#' Load parameters from the central CSV file
+#' @param envir The environment to load the parameters into
+#' @export
+load_parameters <- function(envir) {
+  csv_path <- system.file("extdata/parameters.csv", package = "tb.outbreak.costing")
+  if (csv_path == "") {
+    csv_path <- here::here("inst/extdata/parameters.csv")
+  }
+  if (!file.exists(csv_path)) {
+    stop("Parameters CSV file not found at: ", csv_path)
+  }
+  
+  params_df <- read.csv(csv_path, stringsAsFactors = FALSE)
+  
+  # For evaluation to find earlier variables, we evaluate in a temporary environment
+  eval_env <- new.env(parent = parent.env(envir))
+  
+  for (i in seq_len(nrow(params_df))) {
+    name <- params_df$parameter[i]
+    val_str <- params_df$value[i]
+    
+    # Try to parse and evaluate the value in eval_env
+    val <- tryCatch({
+      eval(parse(text = val_str), envir = eval_env)
+    }, error = function(e) {
+      # If evaluation fails (e.g. string syntax like "TB Nurse Band 3"), treat as character
+      val_str
+    })
+    
+    # Assign the evaluated value to both the evaluation environment (so subsequent
+    # formulas can refer to it) and the target environment
+    assign(name, val, envir = eval_env)
+    assign(name, val, envir = envir)
+  }
+  
+  return(params_df$parameter)
+}
+
+# Populate default values from central CSV
+param_names <- load_parameters(pkg_env)
 
 # Setup active bindings in package environment during load
 # This allows referencing these variables directly in the package namespace,
 # falling back to the global environment if defined there (for scripts/model_data.R overrides).
 env <- environment()
-
-param_names <- c("p_pension18", "p_pension19", "p_admin", "p_apprent", "p_NI", "p_pensionNI", 
-                 "d_avail", "d_pubhol", "d_leave0", "d_leave5", "d_leave10", "d_actual", 
-                 "d_actual_hrs", "days_2018", "NI_min", "NI_min_week", "c_phleb", "c_apptnurse", 
-                 "c_drive", "t_admin_post", "t_admin_appt", "t_admin_id", "admin_job", 
-                 "t_QandA", "t_inform", "t_inform_pp", "t_siteRA", "t_phoneRA", "t_phone_preRA", 
-                 "t_site_screen", "d_site", "t_rev_meet", "t_inc_meet", "max_screen", 
-                 "t_enquire", "p_site_screen", "p_screen_incid", "c_fup_appt", "c_blood", 
-                 "c_TST", "c_TBphys_outside_yr", "c_TBphys_outside_hr", "c_hpp_outside_yr", 
-                 "c_hpp_outside_hr", "c_nurse_3_outside_yr", "c_nurse_3_outside_hr", 
-                 "c_nurse_6_outside_yr", "c_nurse_6_outside_hr", "c_nurse_7_outside_yr", 
-                 "c_nurse_7_outside_hr", "c_nurse_lead_outside_yr", "c_nurse_lead_outside_hr", 
-                 "c_meeting_weekly", "c_Tx")
 
 for (name in param_names) {
   local({
