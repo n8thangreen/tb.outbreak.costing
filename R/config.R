@@ -19,7 +19,11 @@ load_parameters <- function(envir) {
   params_df <- read.csv(csv_path, stringsAsFactors = FALSE)
   
   # For evaluation to find earlier variables, we evaluate in a temporary environment
-  eval_env <- new.env(parent = parent.env(envir))
+  eval_parent <- parent.env(envir)
+  if (identical(eval_parent, emptyenv())) {
+    eval_parent <- baseenv()
+  }
+  eval_env <- new.env(parent = eval_parent)
   
   for (i in seq_len(nrow(params_df))) {
     name <- params_df$parameter[i]
@@ -41,6 +45,10 @@ load_parameters <- function(envir) {
   
   return(params_df$parameter)
 }
+
+#' @rdname load_parameters
+#' @export
+load_parameter <- load_parameters
 
 # Populate default values from central CSV
 param_names <- load_parameters(pkg_env)

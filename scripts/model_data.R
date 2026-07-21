@@ -8,13 +8,18 @@ save_csv <- TRUE
 # or we can read and evaluate the CSV directly in globalenv().
 # Sourcing this script is done to populate globalenv(), so we pass globalenv().
 # If the package is loaded, load_parameters is exported, so we can use it!
-if (requireNamespace("tb.outbreak.costing", quietly = TRUE)) {
-  tb.outbreak.costing::load_parameters(globalenv())
+
+if (suppressWarnings(requireNamespace("tb.outbreak.costing", quietly = TRUE))) {
+  library(tb.outbreak.costing)
+  load_parameters(globalenv())
+} else if (requireNamespace("devtools", quietly = TRUE)) {
+  devtools::load_all(here::here())
+  load_parameters(globalenv())
 } else {
   # Fallback if package is not installed/loaded
   csv_path <- here::here("inst/extdata/parameters.csv")
   params_df <- read.csv(csv_path, stringsAsFactors = FALSE)
-  eval_env <- new.env(parent = emptyenv())
+  eval_env <- new.env(parent = baseenv())
   for (i in seq_len(nrow(params_df))) {
     name <- params_df$parameter[i]
     val_str <- params_df$value[i]
@@ -52,6 +57,7 @@ if (save_csv) {
                value = as.matrix(params),
                row.names = NULL)
   
+  dir.create(here::here("input_data"), showWarnings = FALSE, recursive = TRUE)
   write.csv(as.matrix(tab), file = here::here("input_data/param_vals.csv"))
 }
 

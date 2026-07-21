@@ -9,6 +9,8 @@ PATH_SITE_BIRM(n_id, n_screen, n_latent, phleb_thresh = 25)
 \arguments{
 \item{n_id}{number identified}
 
+\item{n_screen}{}
+
 \item{phleb_thresh}{numbered screened to use external company for taking blood}
 }
 \description{

@@ -12,9 +12,8 @@ library(ggplot2)
 library(reshape2)
 
 
-# load parameter values
-devtools::load_all(".")
 source(here::here("scripts/model_data.R"))
+
 load(here::here("input_data/BUGS_output.RData"))
 
 dat <-

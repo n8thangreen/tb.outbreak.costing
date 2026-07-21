@@ -6,6 +6,9 @@
 \usage{
 CFUP(n_latent)
 }
+\arguments{
+\item{n_latent}{}
+}
 \description{
 cost of follow-up appointments
 }

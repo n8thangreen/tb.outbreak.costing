@@ -8,6 +8,10 @@ PATH_INVITE_BIRM(n_id, n_screen, n_latent)
 }
 \arguments{
 \item{n_id}{number identified}
+
+\item{n_screen}{}
+
+\item{n_latent}{}
 }
 \description{
 PATH_INVITE_BIRM

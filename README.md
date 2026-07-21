@@ -6,32 +6,32 @@ This repo contains the R code to calculate TB outbreak costing using data from i
 
 - Clone the repository:
 
-```
+```bash
 git clone https://github.com/n8thangreen/tb.outbreak.costing.git
 ```
 
-- Install dependencies (example):
-
-  - R (>= 4.0)
-  - `devtools`
-  - `dplyr`, `purrr`, `ggplot2`, `reshape2`, `here`
-  - `R2WinBUGS` / `R2OpenBUGS` or `rjags` (if running BUGS models)
+- Install dependencies and package:
 
   In R:
 
 ```r
-install.packages(c("devtools", "dplyr", "purrr", "ggplot2", "reshape2", "here"))
-# then load and install the package for development
+# Install development package tools and dependencies
+install.packages(c("devtools", "dplyr", "purrr", "ggplot2", "reshape2", "here", "gridExtra", "tidybayes"))
+
+# Load package for development
 devtools::load_all(".")
+
+# Or install package locally
+devtools::install()
 ```
 
 ### Overview
 #### Background
-Tuberculosis remains an import public health challenge in England, despite 7 years of declining cases.
+Tuberculosis remains an important public health challenge in England, despite 7 years of declining cases.
 In 2018 there were 4,655 TB cases in England (8.3 per 100,000 population).
 
 #### Contact tracing
-Contact tracing of individuals exposed to infectious active TB cases is an important component of TB control, highlighted in the the Public Health England / National Health Service England Collaborative.
+Contact tracing of individuals exposed to infectious active TB cases is an important component of TB control, highlighted in the Public Health England / National Health Service England Collaborative.
 The purpose of contact tracing is to identify recently-infected individuals as rapidly as possible to reduce morbidity and mortality in those who have developed active TB disease and reduce transmission.
 The majority of contact tracing is small-scale, typically involving a small number of household and social contacts.
 However, there are occasions when large-scale incident responses are required.
@@ -43,7 +43,7 @@ To address this important evidence gap, we analysed data from Birmingham and Sol
 
 ### Related work
 #### Excel model
-Originally this model was implemented in Excel and VBA [here](https://github.com/n8thangreen/tb_incident_contact_tracing_costing) but, in order to further develop it, it was rewritten in to R.
+Originally this model was implemented in Excel and VBA [here](https://github.com/n8thangreen/tb_incident_contact_tracing_costing) but, in order to further develop it, it was rewritten into R.
 
 #### Shiny app
 A Shiny app running this model can be accessed [here](https://n8thangreen.shinyapps.io/incidentCostingShiny/).
@@ -53,30 +53,36 @@ The GitHub repo for this is [here](https://github.com/n8thangreen/incidentCostin
 
 Folder | Purpose
 ---|---
-[`output_data`](output_data/) | Results data
-[`BUGS`](BUGS/) | BUGS code and R script to run it
+[`R`](R/) | Package source R functions and configuration
+[`inst/extdata`](inst/extdata/) | Central parameter configuration CSV files
+[`scripts`](scripts/) | Analysis, plotting, and costing scripts
+[`BUGS`](BUGS/) | BUGS model code and fitting scripts
+[`input_data`](input_data/) | Processed input datasets, parameter values, and BUGS output files
+[`output_data`](output_data/) | Model output and simulation results data
+[`plots`](plots/) | Generated figures and visualization outputs
 
 ### Files and scripts of interest
-- `R/config.R`: package configuration and parameter loading.
-- `scripts/model_data.R`: loads parameters and computes derived values for analysis and outputs param_vals.csv for reference.
-- `scripts/posterior_predictive_analysis.R`: runs posterior predictive simulations and compares expected-value and posterior predictive approaches.
-- `inst/extdata/parameters.csv`: central parameter table used by load_parameters().
-- `input_data/`: cleaned and processed input datasets and BUGS output files.
+- `R/config.R`: Package configuration and parameter loading logic (`load_parameters()` / `load_parameter()`).
+- `scripts/model_data.R`: Loads parameters and computes derived cost variables for analysis, outputting `param_vals.csv` for reference.
+- `scripts/costs_with_BUGS.R`: Runs probabilistic sensitivity analysis and total costing using BUGS output.
+- `scripts/posterior_predictive_analysis.R`: Runs posterior predictive simulations and compares expected-value and posterior predictive approaches.
+- `inst/extdata/parameters.csv`: Central parameter table used by `load_parameters()`.
+- `input_data/`: Cleaned and processed input datasets and BUGS output files.
 
 ### Reproducing results
-- Most analyses are driven from the `scripts/` directory and the `BUGS/` folder. To reproduce the posterior predictive analysis run:
+- Most analyses are driven from the `scripts/` directory and the `BUGS/` folder. To reproduce the posterior predictive analysis:
 
   1. Ensure required R packages are installed.
   2. Generate or place BUGS output at `input_data/BUGS_output.RData` (or run the BUGS model in `BUGS/`).
-  3. From the project root in R: `source("scripts/model_data.R")` and then run `scripts/posterior_predictive_analysis.R` (or source it).
+  3. From the project root in R: `source("scripts/model_data.R")` and then run `scripts/costs_with_BUGS.R` or `scripts/posterior_predictive_analysis.R`.
 
 ### Data
-- `input_data/cleaned_data.csv`: cleaned incident data used for model fitting and analysis.
-- `input_data/BUGS_output.RData`: BUGS model output (required for posterior predictive analysis).
-- `inst/extdata/parameters.csv`: the master parameter table used by `R/config.R` and `scripts/model_data.R`.
+- `input_data/cleaned_data.csv`: Cleaned incident data used for model fitting and analysis.
+- `input_data/BUGS_output.RData`: BUGS model output (required for BUGS costing and posterior predictive analysis).
+- `inst/extdata/parameters.csv`: The master parameter table used by `R/config.R` and `scripts/model_data.R`.
 
 ### Usage notes
-- The package provides a helper `load_parameters()` to load default parameter values from `inst/extdata/parameters.csv` into an environment; `scripts/model_data.R` uses this to populate the global environment when run interactively.
+- The package exports helper functions `load_parameters()` (and `load_parameter()`) to load default parameter values from `inst/extdata/parameters.csv` into a specified environment; `scripts/model_data.R` uses this to populate the global environment when run interactively.
 - Scripts often rely on global variables; running scripts via `source()` (as used in this project) will create those variables in the calling environment.
 
 ### Contributing
