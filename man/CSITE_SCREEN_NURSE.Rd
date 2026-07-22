@@ -8,8 +8,6 @@ CSITE_SCREEN_NURSE(n_id, n_screen)
 }
 \arguments{
 \item{n_id}{number identified}
-
-\item{n_screen}{}
 }
 \description{
 CSITE_SCREEN_NURSE

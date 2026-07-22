@@ -6,9 +6,6 @@
 \usage{
 CALLTX(n_latent)
 }
-\arguments{
-\item{n_latent}{}
-}
 \description{
 cost of all treatment for ltbi positive
 }

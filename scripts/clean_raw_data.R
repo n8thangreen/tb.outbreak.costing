@@ -5,85 +5,97 @@ library(dplyr)
 library(purrr)
 library(readxl)
 
-excel_path <- here::here("../../data", "Birmingham", "incidents2.xlsx")
+# # original data set
+# excel_path <- here::here("../../data", "Birmingham", "incidents2.xlsx")
 
-# Read password securely from environment variable EXCEL_PASSWORD or interactive prompt
-excel_password <- Sys.getenv("EXCEL_PASSWORD")
-if (excel_password == "" && interactive()) {
-  if (requireNamespace("getPass", quietly = TRUE)) {
-    excel_password <- getPass::getPass("Enter Excel workbook password: ")
-  } else {
-    excel_password <- readline("Enter Excel workbook password: ")
-  }
-}
-
-# Helper function to open password-protected Excel files on Windows
-open_excel_wb <- function(path, password = NULL) {
-  if (is.null(password) || password == "") {
-    return(path)
-  }
-  norm_path <- normalizePath(path, winslash = "\\", mustWork = TRUE)
-  temp_file <- tempfile(fileext = ".xlsx")
-  norm_temp <- normalizePath(temp_file, winslash = "\\", mustWork = FALSE)
-  
-  ps_cmd <- sprintf(
-    '$excel = New-Object -ComObject Excel.Application; $excel.Visible = $false; $excel.DisplayAlerts = $false; $wb = $excel.Workbooks.Open(\"%s\", 0, $true, 5, \"%s\"); $wb.SaveAs(\"%s\", 51); $wb.Close($false); $excel.Quit()',
-    norm_path, password, norm_temp
-  )
-  
-  system2("powershell", args = c("-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps_cmd), stdout = FALSE, stderr = FALSE)
-  
-  return(temp_file)
-}
-
-# Decrypt to temporary file if password is provided
-working_path <- open_excel_wb(excel_path, password = excel_password)
-if (working_path != excel_path) {
-  on.exit(if (file.exists(working_path)) unlink(working_path), add = TRUE)
-}
+# 2026 data set
+excel_path <- here::here("../../data/cleaned - Incidents Data start date 2010 onwards current.xlsx")
 
 # list all sheets/tabs in the Excel workbook
-sheets <- readxl::excel_sheets(working_path)
+sheets <- readxl::excel_sheets(path = excel_path)
 
-# read all sheets and combine into one long table, creating a year column if missing
+# normalize column names using strict text matching (case-insensitive exact string match)
+normalize_col_names <- function(df) {
+  igra_aliases <- c("screened with igra", "total by igra", "total no igra")
+  mantoux_aliases <- c("screened with mantoux", "total by mantoux", "total no mantoux", "no mantoux")
+  setting_aliases <- c("setting", "setting2")
+  sputum_smear_positive <- c("sputum  smear positive", "sputum smear positive")
+  screening_status <- c("status", "screening status")
+  date_case_closed <- "date case closed"
+  
+  col_names <- names(df)
+  
+  new_names <- sapply(col_names, function(col) {
+    col_clean <- tolower(gsub("\\s+", " ", trimws(col)))
+    
+    if (col_clean %in% igra_aliases) {
+      return("Total No IGRA")
+    } else if (col_clean %in% mantoux_aliases) {
+      return("Total No Mantoux")
+    } else if (col_clean %in% sputum_smear_positive) {
+      return("Sputum smear positive")
+    } else if (col_clean %in% screening_status) {
+      return("Screening status")
+    } else if (col_clean %in% date_case_closed) {
+      return("Date case closed")
+    } else if (col_clean %in% setting_aliases) {
+      return("setting")
+    } else {
+      return(col)
+    }
+  }, USE.NAMES = FALSE)
+  
+  names(df) <- new_names
+  df
+}
+
+# read all sheets and combine into one long table with a year column
 dat_raw <- purrr::map_dfr(sheets, function(sheet) {
-  df <- readxl::read_xlsx(path = working_path, sheet = sheet)
+  df <- readxl::read_xlsx(path = excel_path, sheet = sheet, col_types = "text")
   if (!"year" %in% names(df)) {
     df$year <- sheet
   }
+  df <- normalize_col_names(df)
   df
 })
 
-setting_col <- if ("setting2" %in% names(dat_raw)) "setting2" else "setting"
+cols_to_select <- c("year",
+                    "setting",
+                    "Total No identified",
+                    "Total No Screened",
+                    "Total No IGRA",
+                    "Total No Mantoux",
+                    "Latent")
 
-dat <- dat_raw[, c("year",
-                   setting_col,
-                   "Total No identified",
-                   "Total No Screened",
-                   "Latent")]
+cols_to_select <- intersect(cols_to_select, names(dat_raw))
+dat <- dat_raw[, cols_to_select]
 
-names(dat)[names(dat) == setting_col] <- "setting"
+# coerce numeric columns
+num_cols <- c("year", "Total No identified", "Total No Screened", "Total No IGRA", "Total No Mantoux", "Latent")
+num_cols <- intersect(num_cols, names(dat))
 
-# coerce year to numeric and remove incidents with missing data
-dat$year <- as.numeric(dat$year)
+for (col in num_cols) {
+  dat[[col]] <- as.numeric(dat[[col]])
+}
+
+# remove incidents with missing data
 dat <- dat[dat$year %in% 2013:2018, ]
-dat <- dat[!is.na(dat$`Total No identified`), ]
-dat$`Total No Screened` <- as.numeric(dat$`Total No Screened`)
-dat <- dat[!is.na(dat$`Total No Screened`), ]
+if ("Total No identified" %in% names(dat)) dat <- dat[!is.na(dat$`Total No identified`), ]
+if ("Total No Screened" %in% names(dat)) dat <- dat[!is.na(dat$`Total No Screened`), ]
 
-dat$Latent <- as.numeric(dat$Latent)
-dat$Latent[is.na(dat$Latent)] <- 0
+if ("Latent" %in% names(dat)) dat$Latent[is.na(dat$Latent)] <- 0
 
-dat <-
-  dat %>% 
-  mutate(
-    setting = factor(setting),
-    p_screen = `Total No Screened`/`Total No identified`,  # prop screened of identified per incident
-    p_ltbi = `Latent`/`Total No Screened`)                 # prop ltbi of screened per incident
+if ("setting" %in% names(dat)) {
+  dat$setting <- factor(dat$setting)
+}
 
-##TODO: confirm what this should be
-# row 132 too many latent. should be 1?
-dat <-
-  mutate(dat, Latent = pmin(`Total No Screened`, Latent))
+if ("Total No Screened" %in% names(dat) && "Total No identified" %in% names(dat)) {
+  dat$p_screen <- dat$`Total No Screened` / dat$`Total No identified`
+}
 
-write.csv(dat, file = "data/cleaned_data.csv", row.names = FALSE)
+if ("Latent" %in% names(dat) && "Total No Screened" %in% names(dat)) {
+  dat$p_ltbi <- dat$Latent / dat$`Total No Screened`
+  dat$Latent <- pmin(dat$`Total No Screened`, dat$Latent)
+}
+
+write.csv(dat, file = "input_data/cleaned_data.csv", row.names = FALSE)

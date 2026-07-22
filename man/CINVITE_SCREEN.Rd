@@ -8,8 +8,6 @@ CINVITE_SCREEN(n_id, n_screen)
 }
 \arguments{
 \item{n_id}{number identified}
-
-\item{n_screen}{}
 }
 \description{
 CINVITE_SCREEN
