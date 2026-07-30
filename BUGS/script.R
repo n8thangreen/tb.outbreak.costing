@@ -1,17 +1,14 @@
-
+# ============================
 # run BUGS model script
-# and forest plots
-
+# ============================
 
 library(R2jags)
 library(dplyr)
 library(reshape2)
 
-dat <- read.csv("data/cleaned_data.csv", check.names = FALSE)
+dat <- read.csv("input_data/cleaned_data.csv", check.names = FALSE)
 
-inc <-
-  dcast(dat, year ~ setting, value.var = "Latent") %>% 
-  select(-year)
+inc <- table(dat$year, dat$setting)
 
 dataJags <-
   list(inc = inc,
@@ -30,7 +27,8 @@ inits <-
 filein <- "BUGS/model.txt"
 params <- c("rate_inc", "rate_id", "p_screen", "p_ltbi",
             "srate_inc", "srate_id", "sp_screen", "sp_ltbi",
-            "pred_n_screen", "pred_n_ltbi")
+            "pred_n_screen", "pred_n_ltbi",
+            "inc_rep", "id_rep", "screen_rep", "ltbi_rep")
 
 n.iter <- 20000
 n.burnin <- 1000
