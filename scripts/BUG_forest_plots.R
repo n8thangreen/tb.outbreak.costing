@@ -96,6 +96,10 @@ ppc_stat(screen, screen_rep_matrix, stat = "var") +
   theme_minimal() +
   labs(title = "Binomial Overdispersion Check: Variance")
 
+ppc_stat(screen, screen_rep_matrix, stat = "mean") +
+  theme_minimal() +
+  labs(title = "Binomial Check: Mean")
+
 # Shows the count of each discrete outcome category
 ppc_bars(screen, screen_rep_matrix) +
   theme_minimal() +
@@ -111,6 +115,10 @@ latent_rep_matrix <- out$sims.matrix[, latent_cols]
 ppc_stat(latent, latent_rep_matrix, stat = "var") +
   theme_minimal() +
   labs(title = "Binomial Overdispersion Check: Variance")
+
+ppc_stat(latent, latent_rep_matrix, stat = "mean") +
+  theme_minimal() +
+  labs(title = "Binomial Check: Mean")
 
 # Shows the count of each discrete outcome category
 ppc_bars(latent, latent_rep_matrix) +
@@ -135,7 +143,7 @@ ppc_rootogram(dat$`Total No identified`, id_rep_matrix) +
 
 # split by year or setting ---
 
-# Check if the model captures the mean LTBI counts correctly
+# Check if the model captures LTBI counts correctly
 ppc_stat_grouped(
   y = dat$Latent, 
   yrep = latent_rep_matrix, 
@@ -154,7 +162,43 @@ ppc_stat_grouped(
   theme_minimal() +
   labs(title = "Mean LTBI by Year")
 
-# Check if the model captures the variance in screening 
+ppc_stat_grouped(
+  y = dat$Latent, 
+  yrep = latent_rep_matrix, 
+  group = dat$setting, 
+  stat = "var"
+) +
+  theme_minimal() +
+  labs(title = "Mean LTBI by Setting")
+
+ppc_stat_grouped(
+  y = dat$Latent, 
+  yrep = latent_rep_matrix, 
+  group = dat$year, 
+  stat = "var"
+) +
+  theme_minimal() +
+  labs(title = "Mean LTBI by Year")
+
+# Check if the model captures screening counts correctly 
+ppc_stat_grouped(
+  y = dat$`Total No Screened`, 
+  yrep = screen_rep_matrix, 
+  group = dat$setting, 
+  stat = "mean"
+) +
+  theme_minimal() +
+  labs(title = "Variance in Screening by Setting")
+
+ppc_stat_grouped(
+  y = dat$`Total No Screened`, 
+  yrep = screen_rep_matrix, 
+  group = dat$year, 
+  stat = "mean"
+) +
+  theme_minimal() +
+  labs(title = "Variance in Screening by Year")
+
 ppc_stat_grouped(
   y = dat$`Total No Screened`, 
   yrep = screen_rep_matrix, 
@@ -162,7 +206,7 @@ ppc_stat_grouped(
   stat = "var"
 ) +
   theme_minimal() +
-  labs(title = "Variance in Screening by Year")
+  labs(title = "Variance in Screening by Setting")
 
 ppc_stat_grouped(
   y = dat$`Total No Screened`, 
