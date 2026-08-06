@@ -1,0 +1,316 @@
+# ============================================
+# Poisson correlated TB intensities
+# ============================================
+
+library(R2jags)
+library(dplyr)
+library(reshape2)
+library(rstan)
+library(here)
+library(readr)
+library(cmdstanr)
+library(posterior)
+library(bayesplot)
+library(ggplot2)
+
+
+dat <- read.csv("C:/Users/john1/Downloads/cleaned_data.csv")  # dont keep data here
+#dat <- read_csv(here("input_data", "cleaned_data.csv"))
+
+# Enable parallel processing for Stan
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+
+Y <- dat$Total.No.identified
+J <- length(unique(dat$setting))
+L <- length(unique(dat$year))
+M <- length(Y)
+
+dat$setting_num <- as.numeric(factor(dat$setting))
+dat$year_num <- as.numeric(factor(dat$year))
+
+S = dat$setting_num
+Z = dat$year_num
+SCR <- dat$Total.No.Screened
+LTBI <- dat$Latent
+
+stan_data <- list(
+  Y = Y,
+  J = J,
+  L = L,
+  M = M,
+  S = S,
+  Z = Z,
+  SCR = SCR,
+  LTBI = LTBI
+)
+
+
+
+
+#########################
+# cross design with OLRE
+
+cross_olre_model <- "
+data {
+  int<lower=1> M;                      // Total number of observations
+  int<lower=1> L;                      // Total number of years
+  int<lower=1> J;                      // Total number of settings
+  
+  array[M] int<lower=0> LTBI;           // Sub-counts (must be <= Y[m])
+  array[M] int<lower=0> SCR;           // Sub-counts (must be <= Y[m])
+  array[M] int<lower=0> Y;             // Observed counts
+  array[M] int<lower=1, upper=J> S;    // Setting index for each observation m
+  array[M] int<lower=1, upper=L> Z;    // Year index for each observation m
+}
+
+parameters {
+  //Identification//
+  real mu;                             // Global intercept
+  
+  // Raw parameters for non-centered parameterization
+  vector[L] a_raw;                     // Year effects (raw)
+  vector[J] b_raw;                     // Setting effects (raw)
+  vector[M] epsilon_raw;               // Observation-level effects (raw)
+  
+  // Standard deviations for the hierarchies
+  real sigma_a_raw;
+  real sigma_b_raw;
+  real sigma_obs_raw;
+  
+  //Screening//
+  real mu_q;                             // Global intercept
+  
+  // Raw parameters for non-centered parameterization
+  vector[L] a_q_raw;                     // Year effects (raw)
+  vector[J] b_q_raw;                     // Setting effects (raw)
+  vector[M] epsilon_q_raw;               // Observation-level effects (raw)
+  
+  // Standard deviations for the hierarchies
+  real sigma_a_q_raw;
+  real sigma_b_q_raw;
+  real sigma_obs_q_raw;
+  
+  //LTBI//
+  //Screening//
+  real mu_d;                             // Global intercept
+  
+  // Raw parameters for non-centered parameterization
+  vector[L] a_d_raw;                     // Year effects (raw)
+  vector[J] b_d_raw;                     // Setting effects (raw)
+  vector[M] epsilon_d_raw;               // Observation-level effects (raw)
+  
+  // Standard deviations for the hierarchies
+  real sigma_a_d_raw;
+  real sigma_b_d_raw;
+  real sigma_obs_d_raw;
+}
+
+transformed parameters {
+  //Identification//
+  vector[L] a;                         // Year effects
+  vector[J] b;                         // Setting effects
+  vector[M] log_lambda;                // Log-intensity for each observation
+  
+  real<lower=0> sigma_a = exp(sigma_a_raw);               // SD for year effects
+  real<lower=0> sigma_b = exp(sigma_b_raw);               // SD for year effects
+  real<lower=0> sigma_obs = exp(sigma_obs_raw);               // SD for year effects
+  
+  // Non-centered transformations (scaling raw standard normals by their SD)
+  a = a_raw * sigma_a;
+  b = b_raw * sigma_b;
+  
+  // Crossed structure + OLRE
+  for (m in 1:M) {
+    log_lambda[m] = mu + a[Z[m]] + b[S[m]] + (epsilon_raw[m] * sigma_obs);
+  }
+  
+  //Screening//
+  vector[L] a_q;                         // Year effects
+  vector[J] b_q;                         // Setting effects
+  vector[M] logit_q;                // Log-intensity for each observation
+  
+  real<lower=0> sigma_a_q = exp(sigma_a_q_raw);               // SD for year effects
+  real<lower=0> sigma_b_q = exp(sigma_b_q_raw);               // SD for year effects
+  real<lower=0> sigma_obs_q = exp(sigma_obs_q_raw);               // SD for year effects
+  
+  // Non-centered transformations (scaling raw standard normals by their SD)
+  a_q = a_q_raw * sigma_a_q;
+  b_q = b_q_raw * sigma_b_q;
+  
+  // Crossed structure + OLRE
+  for (m in 1:M) {
+    logit_q[m] = mu_q + a_q[Z[m]] + b_q[S[m]] + (epsilon_q_raw[m] * sigma_obs_q);
+  }
+  
+  //LTBI//
+   //Screening//
+  vector[L] a_d;                         // Year effects
+  vector[J] b_d;                         // Setting effects
+  vector[M] logit_d;                // Log-intensity for each observation
+  
+  real<lower=0> sigma_a_d = exp(sigma_a_d_raw);               // SD for year effects
+  real<lower=0> sigma_b_d = exp(sigma_b_d_raw);               // SD for year effects
+  real<lower=0> sigma_obs_d = exp(sigma_obs_d_raw);               // SD for year effects
+  
+  // Non-centered transformations (scaling raw standard normals by their SD)
+  a_d = a_d_raw * sigma_a_d;
+  b_d = b_d_raw * sigma_b_d;
+  
+  // Crossed structure + OLRE
+  for (m in 1:M) {
+    logit_d[m] = mu_d + a_d[Z[m]] + b_d[S[m]] + (epsilon_d_raw[m] * sigma_obs_d);
+  }
+  
+  
+}
+
+model {
+  // Priors
+  mu ~ normal(0, 5);                   // Weakly informative prior on global mean
+  
+  // Standard normal priors for the raw parameters (Matt trick)
+  a_raw ~ std_normal();
+  b_raw ~ std_normal();
+  epsilon_raw ~ std_normal();
+  
+  // Half-normal priors on standard deviations (implicitly truncated at 0)
+  sigma_a_raw ~ normal(0, 1);
+  sigma_b_raw ~ normal(0, 1);
+  sigma_obs_raw ~ normal(0, 1);
+  
+  //mu_q ~ normal(0, 1.87);                   // Weakly informative prior on global mean
+  mu_q ~ normal(0.94, 0.3);                   //informative prior on global mean
+  
+  // Standard normal priors for the raw parameters (Matt trick)
+  a_q_raw ~ std_normal();
+  b_q_raw ~ std_normal();
+  epsilon_q_raw ~ std_normal();
+  
+  // Half-normal priors on standard deviations (implicitly truncated at 0)
+  sigma_a_q_raw ~ normal(0, 1);
+  sigma_b_q_raw ~ normal(0, 1);
+  sigma_obs_q_raw ~ normal(0, 1);
+  
+  //mu_d ~ normal(0, 1.87);                   // Weakly informative prior on global mean
+    mu_d ~ normal(-1.49, 0.3);                   //informative prior on global mean
+
+  // Standard normal priors for the raw parameters (Matt trick)
+  a_d_raw ~ std_normal();
+  b_d_raw ~ std_normal();
+  epsilon_d_raw ~ std_normal();
+  
+  // Half-normal priors on standard deviations (implicitly truncated at 0)
+  sigma_a_d_raw ~ normal(0, 1);
+  sigma_b_d_raw ~ normal(0, 1);
+  sigma_obs_d_raw ~ normal(0, 1);
+  
+  
+  // Likelihood
+  Y ~ poisson_log(log_lambda);      
+  
+  for (m in 1:M) {                     // Binomial thinning process
+    SCR[m] ~ binomial_logit(Y[m], logit_q[m]);
+  }
+  
+  for (m in 1:M) {                     // Binomial thinning process
+    LTBI[m] ~ binomial_logit(SCR[m], logit_d[m]);
+  }
+  
+}
+
+generated quantities {
+  array[M] int<lower=0> Y_rep;
+  array[M] int<lower=0> SCR_rep;
+  array[M] int<lower=0> LTBI_rep;
+  
+  // Vector to store log-likelihood for LOO-CV model comparison
+  vector[M] log_lik; 
+
+  for (m in 1:M) {
+    // 1. Simulate Total Identified
+    Y_rep[m] = poisson_log_rng(log_lambda[m]);
+    
+    // 2. Simulate Screened (conditional on observed Y)
+    SCR_rep[m] = binomial_rng(Y[m], inv_logit(logit_q[m]));
+    
+    // 3. Simulate LTBI (conditional on observed SCR)
+    LTBI_rep[m] = binomial_rng(SCR[m], inv_logit(logit_d[m]));
+    
+    // 4. Calculate log-likelihood
+    log_lik[m] = poisson_log_lpmf(Y[m] | log_lambda[m]) + 
+                 binomial_logit_lpmf(SCR[m] | Y[m], logit_q[m]) + 
+                 binomial_logit_lpmf(LTBI[m] | SCR[m], logit_d[m]);
+  }
+}
+"
+
+# temporary .stan file
+stan_file <- write_stan_file(cross_olre_model)
+
+# compile model
+mod_cross_olre <- cmdstan_model(stan_file)
+
+fit <- mod_cross_olre$sample(
+  data = stan_data,
+  seed = 42,
+  chains = 2,
+  parallel_chains = 2, 
+  iter_warmup = 1000,
+  iter_sampling = 1000,
+  adapt_delta = 0.93
+)
+
+# # ---------------------------------------------------------
+# # Posterior Predictive Check Plots
+# # ---------------------------------------------------------
+# 
+# # A. Density Overlay
+# # Checks if the overall shape of the simulated counts matches the observed data.
+# # We plot the true Y against the first 100 simulated datasets to avoid over-cluttering.
+# ppc_dens_overlay(y = Y, yrep = Y_rep_old[1:100, ]) + 
+#   ggtitle("Old Model: Distribution of Counts")
+
+
+Y_rep <- as_draws_matrix(fit$draws("Y_rep"))
+SCR_rep <- as_draws_matrix(fit$draws("SCR_rep"))
+LTBI_rep <- as_draws_matrix(fit$draws("LTBI_rep"))
+
+# ---------------------------------------------------------
+# Diagnostic Plot 1: Density Overlays
+# Compares the overall distribution of your data (dark line) 
+# to 100 simulated datasets from the posterior (light blue lines).
+# ---------------------------------------------------------
+p1 <- ppc_dens_overlay(y = stan_data$Y, yrep = Y_rep[1:100, ]) + 
+  ggtitle("PPC: Total Identified (Y)")
+
+p2 <- ppc_dens_overlay(y = stan_data$SCR, yrep = SCR_rep[1:100, ]) + 
+  ggtitle("PPC: Screened (SCR)")
+
+p3 <- ppc_dens_overlay(y = stan_data$LTBI, yrep = LTBI_rep[1:100, ]) + 
+  ggtitle("PPC: Latent TB (LTBI)")
+
+
+
+# If you use the gridExtra or patchwork package, you can display them side-by-side
+# library(patchwork)
+# p1 / p2 / p3
+
+# ---------------------------------------------------------
+# Diagnostic Plot 2: Proportion of Zeros
+# Because count data often has excess zeros, it's crucial to check 
+# if your model predicts the right amount of zeros.
+# ---------------------------------------------------------
+prop_zero <- function(x) mean(x == 0)
+
+ppc_stat(y = stan_data$Y, yrep = Y_rep, stat = "prop_zero") + 
+  ggtitle("Proportion of Zeros: Identified (Y)")
+
+# ---------------------------------------------------------
+# Diagnostic Plot 3: Predictive Intervals
+# Plots the data points against the 50% and 90% posterior predictive intervals.
+# Most points should fall within the bands.
+# ---------------------------------------------------------
+ppc_intervals(y = stan_data$LTBI, yrep = LTBI_rep) + 
+  ggtitle("Predictive Intervals for LTBI Counts") +
+  coord_flip() # Flip coordinates if you have a lot of M observations
