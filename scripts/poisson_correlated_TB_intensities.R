@@ -1,14 +1,18 @@
+# ============================================
+# Poisson correlated TB intensities
+# ============================================
+
 library(R2jags)
 library(dplyr)
 library(reshape2)
 library(rstan)
+library(here)
+library(readr)
 
-#dat <- read.csv("data/cleaned_data.csv", check.names = FALSE)
-dat <- read.csv("C:/Users/john1/Downloads/cleaned_data.csv")
+# dat <- read.csv("C:/Users/john1/Downloads/cleaned_data.csv")  # dont keep data here
+dat <- read_csv(here("data", "cleaned_data.csv"))
 
-
-
-#model code with no random effects on the probs
+# model code with no random effects on the probs
 model_code <- "
 data {
   int<lower=1> M;                      // Total number of observations
@@ -41,7 +45,6 @@ model {
     for (l in 1:L){
       log_lambda_st[j, l] ~ normal(log_lambda_s[j], sigma_st[j]);
       sigma_obs[j,l] ~ normal(0, 3);
-
     }
   }
   // bottom level: Normal around lambda_st
@@ -54,12 +57,8 @@ model {
   // priors on SDs
   sigma_st  ~ normal(0, 3);
 }
-
 "
 
-
-
-library(rstan)
 
 # Enable parallel processing for Stan
 options(mc.cores = parallel::detectCores())
@@ -86,7 +85,6 @@ stan_data <- list(
   Z = Z
 )
 
-
 fit <- stan(
   model_code = model_code,
   data = stan_data,
@@ -96,11 +94,11 @@ fit <- stan(
   seed = 42
 )
 
-
 posterior = extract(fit)
 
 true_y = c()
 RMSE_y = c()
+
 for(i in 1:dim(posterior$lambda)[2]){
   RMSE_y[i] = sqrt(mean((posterior$lambda[,i] - Y[i])^2))
   x_1 = quantile(posterior$lambda[,i],0.025)
@@ -117,8 +115,7 @@ plot(density((posterior$lambda[,stan_data$S == 5])
 lines(density(dat$Total.No.identified[dat$setting == "other"]))
 
 
-
-#model code with no random effects on the probs
+# model code with no random effects on the probs
 model_code <- "
 data {
   int<lower=1> M;                      // Total number of observations
@@ -182,7 +179,6 @@ model {
   // priors on SDs
   sigma_st  ~ normal(0, 3);
 }
-
 "
 
 posterior = extract(fit)
@@ -190,6 +186,7 @@ posterior = extract(fit)
 posterior$lambda = exp(posterior$log_lambda)
 true_y = c()
 RMSE_y = c()
+
 for(i in 1:dim(posterior$lambda)[2]){
   RMSE_y[i] = sqrt(mean((posterior$lambda[,i] - Y[i])^2))
   x_1 = quantile(posterior$lambda[,i],0.025)
@@ -197,13 +194,19 @@ for(i in 1:dim(posterior$lambda)[2]){
   true_y[i] = x_1< Y[i] & x_2>Y[i]
 }
 
-plot(density(apply(posterior$lambda[,stan_data$S == 5 & stan_data$Z == 7],1,sum)
-))
+#
+posterior$lambda[,stan_data$S == 5 & stan_data$Z == 7] |> 
+  apply(1, sum) |> 
+  density() |> 
+  plot()
 
 abline(v = sum(dat$Total.No.identified[dat$year == 2019 & dat$setting == "other"]))
 
-plot(density((posterior$lambda[,stan_data$S == 5])
-))
+#
+posterior$lambda[, stan_data$S == 5] |> 
+  density() |> 
+  plot()
+
 lines(density(dat$Total.No.identified[dat$setting == "other"]))
 
 

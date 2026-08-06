@@ -1,5 +1,6 @@
+# ======================================
 # clean raw incident data
-
+# ======================================
 
 library(dplyr)
 library(purrr)
@@ -13,6 +14,8 @@ excel_path <- here::here("../../data/cleaned - Incidents Data start date 2010 on
 
 # list all sheets/tabs in the Excel workbook
 sheets <- readxl::excel_sheets(path = excel_path)
+
+# functions ---
 
 # normalize column names using strict text matching (case-insensitive exact string match)
 normalize_col_names <- function(df) {
@@ -59,6 +62,10 @@ dat_raw <- purrr::map_dfr(sheets, function(sheet) {
   df
 })
 
+# -----------
+# clean data 
+# -----------
+
 cols_to_select <- c("year",
                     "setting",
                     "Total No identified",
@@ -79,8 +86,11 @@ for (col in num_cols) {
 }
 
 # remove incidents with missing data
-dat <- dat[dat$year %in% 2013:2018, ]
+
+# dat <- dat[dat$year %in% 2013:2018, ]
+
 if ("Total No identified" %in% names(dat)) dat <- dat[!is.na(dat$`Total No identified`), ]
+
 if ("Total No Screened" %in% names(dat)) dat <- dat[!is.na(dat$`Total No Screened`), ]
 
 if ("Latent" %in% names(dat)) dat$Latent[is.na(dat$Latent)] <- 0
@@ -98,4 +108,5 @@ if ("Latent" %in% names(dat) && "Total No Screened" %in% names(dat)) {
   dat$Latent <- pmin(dat$`Total No Screened`, dat$Latent)
 }
 
-write.csv(dat, file = "input_data/cleaned_data.csv", row.names = FALSE)
+# save
+write.csv(dat, file = here::here("input_data/cleaned_data.csv"), row.names = FALSE)
