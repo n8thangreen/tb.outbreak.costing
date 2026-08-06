@@ -39,40 +39,42 @@ model {
   
   ainc_0 ~ dnorm(0, 0.001)
   ainc_logsd ~ dnorm(0, 0.001)
-  ainc_tau = 1/exp(ainc_logsd)
+  ainc_tau = pow(exp(ainc_logsd), -2)
   
   aid_0 ~ dnorm(0, 0.001)
   aid_logsd ~ dnorm(0, 0.001)
-  aid_tau = 1/exp(aid_logsd)
+  aid_tau = pow(exp(aid_logsd), -2)
   
   as_0 ~ dnorm(0, 0.001)
   as_logsd ~ dnorm(0, 0.001)
-  as_tau = 1/exp(as_logsd)
-  
+  as_tau = pow(exp(as_logsd), -2)
+
   al_0 ~ dnorm(0, 0.001)
   al_logsd ~ dnorm(0, 0.001)
-  al_tau = 1/exp(al_logsd)
-  
+  al_tau = pow(exp(al_logsd), -2)
+
   binc_0 ~ dnorm(0, 0.001)
   binc_logsd ~ dnorm(0, 0.001)
-  binc_tau = 1/exp(binc_logsd)
-  
+  binc_tau = pow(exp(binc_logsd), -2)
+
   bid_0 ~ dnorm(0, 0.001)
   bid_logsd ~ dnorm(0, 0.001)
-  bid_tau = 1/exp(bid_logsd)
-  
+  bid_tau = pow(exp(bid_logsd), -2)
+
   bs_0 ~ dnorm(0, 0.001)
   bs_logsd ~ dnorm(0, 0.001)
-  bs_tau = 1/exp(bs_logsd)
-  
+  bs_tau = pow(exp(bs_logsd), -2)
+
   bl_0 ~ dnorm(0, 0.001)
   bl_logsd ~ dnorm(0, 0.001)
   bl_tau = 1/exp(bl_logsd)
-  
+  bl_tau = pow(exp(bl_logsd), -2)
+
   # bl_tau ~ dgamma(0.001, 0.001)
   
-  ## predictions
+  ## predictions ---
   
+  # means 
   for (s in 1:n_set) {
     log(srate_inc[s]) = ainc_0 + b_inc[s]
     log(srate_id[s]) = aid_0 + b_id[s]
@@ -83,5 +85,17 @@ model {
     pred_n_ltbi[s] = pred_n_screen[s]*sp_ltbi[s]
   }
   
-}
 
+  # ppv
+  for (yr in 1:n_yr) {
+      for (s in 1:n_set) {
+        inc_rep[yr, s] ~ dpois(rate_inc[yr, s]) 
+      }
+  }
+  
+  for (i in 1:n_inc) {
+    id_rep[i] ~ dpois(rate_id[yr[i], set[i]])
+    screen_rep[i] ~ dbin(p_screen[yr[i], set[i]], id[i])
+    ltbi_rep[i] ~ dbin(p_ltbi[yr[i], set[i]], screen[i])
+  }
+}

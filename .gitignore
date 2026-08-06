@@ -4,3 +4,4 @@
 .Ruserdata
 input_data/
 data/
+.Renviron*

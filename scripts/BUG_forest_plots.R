@@ -1,9 +1,9 @@
-
-#############################
+# ================================
 # posterior forest plots
-
+# ================================
 
 library(ggplot2)
+library(bayesplot)
 library(grid)
 library(gridExtra)
 
@@ -20,35 +20,39 @@ grid <-
     levels(as.factor(dat$setting)))
 grid[,"names"] <- paste(grid[,"Var1"], grid[,"Var2"])
 
+# prob LTBI cases from screened
 mcmcplots::caterplot(res_bugs, parms = c("p_ltbi"), reorder = FALSE,
                      labels = grid$names, labels.loc = "above")
+# prob screen
 mcmcplots::caterplot(res_bugs, parms = c("p_screen"), reorder = FALSE,
                      labels = grid$names, labels.loc = "above")
+# identification rate
 mcmcplots::caterplot(res_bugs, parms = c("rate_id"), reorder = FALSE,
                      labels = grid$names, labels.loc = "above")
+# incident rate / year
 mcmcplots::caterplot(res_bugs, parms = c("rate_inc"), reorder = FALSE,
                      labels = grid$names, labels.loc = "above")
 
-# setting only
+# grid setting only (pooled year)
 par(mfrow = c(3,2))
 mcmcplots::caterplot(res_bugs, parms = c("sp_ltbi"), reorder = FALSE,
                      labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-0.1,0.3))
-title("prob ltbi")
+title("probability LTBI")
 mcmcplots::caterplot(res_bugs, parms = c("sp_screen"), reorder = FALSE,
                      labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(0.5,1.1))
-title("prob screen")
+title("probability screened")
 mcmcplots::caterplot(res_bugs, parms = c("srate_id"), reorder = FALSE,
                      labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-100,400))
-title("n identify")
+title("number identified")
 mcmcplots::caterplot(res_bugs, parms = c("srate_inc"), reorder = FALSE,
                      labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-0.1,12))
-title("n incident")
+title("number of incidents")
 mcmcplots::caterplot(res_bugs, parms = c("pred_n_screen"), reorder = FALSE,
                      labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-0.10,300))
-title("n screen")
+title("number screened")
 mcmcplots::caterplot(res_bugs, parms = c("pred_n_ltbi"), reorder = FALSE,
                      labels = levels(as.factor(dat$setting)), labels.loc = "above", val.lim = c(-4,20))
-title("n ltbi")
+title("number LTBI")
 
 
 ###########################
@@ -75,8 +79,140 @@ fp_inc <- stan_forest_plot_setting(res_bugs, param = "srate_inc", title = "Incid
 fp_nscreen <- stan_forest_plot_setting(res_bugs, param = "pred_n_screen", title = "Number screened")
 fp_nltbi <- stan_forest_plot_setting(res_bugs, param = "pred_n_ltbi", title = "Number LTBI")
 
-
 fp <- grid_arrange_shared_legend(fp_ltbi, fp_screen, fp_id, fp_inc, fp_nscreen, fp_nltbi, nrow = 2, ncol = 3)
 
 ggsave(plot = fp, here::here("plots/forest_plot_setting.png"), width = 40, height = 30, units = "cm", dpi = 640)
 
+##################
+# model checking
+
+# screen
+screen <- dat$`Total No Screened`
+screen_cols <- grep("^screen_rep\\[", colnames(out$sims.matrix))
+screen_rep_matrix <- out$sims.matrix[, screen_cols]
+
+# Compare the variance of the observed successes to the replicated successes
+ppc_stat(screen, screen_rep_matrix, stat = "var") +
+  theme_minimal() +
+  labs(title = "Binomial Overdispersion Check: Variance")
+
+ppc_stat(screen, screen_rep_matrix, stat = "mean") +
+  theme_minimal() +
+  labs(title = "Binomial Check: Mean")
+
+# Shows the count of each discrete outcome category
+ppc_bars(screen, screen_rep_matrix) +
+  theme_minimal() +
+  labs(title = "Posterior Predictive Bar Chart of Successes")
+
+# LTBI
+
+latent <- dat$Latent
+latent_cols <- grep("^ltbi_rep\\[", colnames(out$sims.matrix))
+latent_rep_matrix <- out$sims.matrix[, latent_cols]
+
+# Compare the variance of the observed successes to the replicated successes
+ppc_stat(latent, latent_rep_matrix, stat = "var") +
+  theme_minimal() +
+  labs(title = "Binomial Overdispersion Check: Variance")
+
+ppc_stat(latent, latent_rep_matrix, stat = "mean") +
+  theme_minimal() +
+  labs(title = "Binomial Check: Mean")
+
+# Shows the count of each discrete outcome category
+ppc_bars(latent, latent_rep_matrix) +
+  theme_minimal() +
+  labs(title = "Posterior Predictive Bar Chart of Successes")
+
+# number of incidents ---
+
+inc_cols <- grep("^inc_rep\\[", colnames(out$sims.matrix))
+inc_rep_matrix <- out$sims.matrix[, inc_cols]
+inc <- table(dat$year, dat$setting)
+inc_obs_flat <- unlist(inc, use.names = FALSE)
+
+ppc_rootogram(inc_obs_flat, inc_rep_matrix) +
+  theme_minimal()
+
+id_cols <- grep("^id_rep\\[", colnames(out$sims.matrix))
+id_rep_matrix <- out$sims.matrix[, id_cols]
+
+ppc_rootogram(dat$`Total No identified`, id_rep_matrix) +
+  theme_minimal()
+
+# split by year or setting ---
+
+# Check if the model captures LTBI counts correctly
+ppc_stat_grouped(
+  y = dat$Latent, 
+  yrep = latent_rep_matrix, 
+  group = dat$setting, 
+  stat = "mean"
+) +
+  theme_minimal() +
+  labs(title = "Mean LTBI by Setting")
+
+ppc_stat_grouped(
+  y = dat$Latent, 
+  yrep = latent_rep_matrix, 
+  group = dat$year, 
+  stat = "mean"
+) +
+  theme_minimal() +
+  labs(title = "Mean LTBI by Year")
+
+ppc_stat_grouped(
+  y = dat$Latent, 
+  yrep = latent_rep_matrix, 
+  group = dat$setting, 
+  stat = "var"
+) +
+  theme_minimal() +
+  labs(title = "Mean LTBI by Setting")
+
+ppc_stat_grouped(
+  y = dat$Latent, 
+  yrep = latent_rep_matrix, 
+  group = dat$year, 
+  stat = "var"
+) +
+  theme_minimal() +
+  labs(title = "Mean LTBI by Year")
+
+# Check if the model captures screening counts correctly 
+ppc_stat_grouped(
+  y = dat$`Total No Screened`, 
+  yrep = screen_rep_matrix, 
+  group = dat$setting, 
+  stat = "mean"
+) +
+  theme_minimal() +
+  labs(title = "Variance in Screening by Setting")
+
+ppc_stat_grouped(
+  y = dat$`Total No Screened`, 
+  yrep = screen_rep_matrix, 
+  group = dat$year, 
+  stat = "mean"
+) +
+  theme_minimal() +
+  labs(title = "Variance in Screening by Year")
+
+ppc_stat_grouped(
+  y = dat$`Total No Screened`, 
+  yrep = screen_rep_matrix, 
+  group = dat$setting, 
+  stat = "var"
+) +
+  theme_minimal() +
+  labs(title = "Variance in Screening by Setting")
+
+ppc_stat_grouped(
+  y = dat$`Total No Screened`, 
+  yrep = screen_rep_matrix, 
+  group = dat$year, 
+  stat = "var"
+) +
+  theme_minimal() +
+  labs(title = "Variance in Screening by Year")
