@@ -12,16 +12,15 @@ library(cmdstanr)
 library(posterior)
 library(bayesplot)
 library(ggplot2)
+library(patchwork)
 
-
-dat <- read.csv("C:/Users/john1/Downloads/cleaned_data.csv")  # dont keep data here
-#dat <- read_csv(here("input_data", "cleaned_data.csv"))
+dat <- read_csv(here("input_data", "cleaned_data.csv"))
 
 # Enable parallel processing for Stan
 options(mc.cores = parallel::detectCores())
 rstan_options(auto_write = TRUE)
 
-Y <- dat$Total.No.identified
+Y <- dat$`Total No identified`
 J <- length(unique(dat$setting))
 L <- length(unique(dat$year))
 M <- length(Y)
@@ -31,7 +30,7 @@ dat$year_num <- as.numeric(factor(dat$year))
 
 S = dat$setting_num
 Z = dat$year_num
-SCR <- dat$Total.No.Screened
+SCR <- dat$`Total No Screened`
 LTBI <- dat$Latent
 
 stan_data <- list(
@@ -44,8 +43,6 @@ stan_data <- list(
   SCR = SCR,
   LTBI = LTBI
 )
-
-
 
 
 #########################
@@ -261,56 +258,166 @@ fit <- mod_cross_olre$sample(
   adapt_delta = 0.93
 )
 
-# # ---------------------------------------------------------
-# # Posterior Predictive Check Plots
-# # ---------------------------------------------------------
-# 
-# # A. Density Overlay
-# # Checks if the overall shape of the simulated counts matches the observed data.
-# # We plot the true Y against the first 100 simulated datasets to avoid over-cluttering.
-# ppc_dens_overlay(y = Y, yrep = Y_rep_old[1:100, ]) + 
-#   ggtitle("Old Model: Distribution of Counts")
+# ==============================================================================
+# POSTERIOR PREDICTIVE CHECKS (GLOBAL AND GROUPED)
+# ==============================================================================
 
+color_scheme_set("blue")
+theme_set(theme_classic())
 
-Y_rep <- as_draws_matrix(fit$draws("Y_rep"))
-SCR_rep <- as_draws_matrix(fit$draws("SCR_rep"))
+# 1. Extract Posterior Draws
+# ---------------------------------------------------------
+Y_rep    <- as_draws_matrix(fit$draws("Y_rep"))
+SCR_rep  <- as_draws_matrix(fit$draws("SCR_rep"))
 LTBI_rep <- as_draws_matrix(fit$draws("LTBI_rep"))
 
+# Define the grouping variable (Setting)
+setting_group <- as.factor(stan_data$S)
+
+# ==============================================================================
+# PART A: GLOBAL DIAGNOSTICS
+# ==============================================================================
+
+# 1. Global Density Overlays & Bar Plots
 # ---------------------------------------------------------
-# Diagnostic Plot 1: Density Overlays
-# Compares the overall distribution of your data (dark line) 
-# to 100 simulated datasets from the posterior (light blue lines).
-# ---------------------------------------------------------
-p1 <- ppc_dens_overlay(y = stan_data$Y, yrep = Y_rep[1:100, ]) + 
-  ggtitle("PPC: Total Identified (Y)")
+p_global_y <- ppc_dens_overlay(y = stan_data$Y, yrep = Y_rep[1:100, ]) + 
+  ggtitle("Global PPC: Total Identified (Y)")
 
-p2 <- ppc_dens_overlay(y = stan_data$SCR, yrep = SCR_rep[1:100, ]) + 
-  ggtitle("PPC: Screened (SCR)")
+p_global_scr <- ppc_dens_overlay(y = stan_data$SCR, yrep = SCR_rep[1:100, ]) + 
+  ggtitle("Global PPC: Screened (SCR)")
 
-p3 <- ppc_dens_overlay(y = stan_data$LTBI, yrep = LTBI_rep[1:100, ]) + 
-  ggtitle("PPC: Latent TB (LTBI)")
+p_global_ltbi <- ppc_bars(y = stan_data$LTBI, yrep = LTBI_rep[1:100, ]) + 
+  coord_cartesian(xlim = c(-0.5, 20)) + 
+  ggtitle("Global PPC: Latent TB (LTBI)")
+
+# Display Global Count Plots (using patchwork) and save
+p_global_counts <- p_global_y / p_global_scr / p_global_ltbi
+ggsave("plots/global_counts.png", plot = p_global_counts, width = 8, height = 10)
 
 
-
-# If you use the gridExtra or patchwork package, you can display them side-by-side
-# library(patchwork)
-# p1 / p2 / p3
-
-# ---------------------------------------------------------
-# Diagnostic Plot 2: Proportion of Zeros
-# Because count data often has excess zeros, it's crucial to check 
-# if your model predicts the right amount of zeros.
+# 2. Global Proportion of Zeros
 # ---------------------------------------------------------
 prop_zero <- function(x) mean(x == 0)
 
-ppc_stat(y = stan_data$Y, yrep = Y_rep, stat = "prop_zero") + 
-  ggtitle("Proportion of Zeros: Identified (Y)")
+p_global_prop_zero <- ppc_stat(y = stan_data$LTBI, yrep = LTBI_rep, stat = "prop_zero") + 
+  ggtitle("Global PPC: Proportion of Zeros in LTBI")
 
+ggsave("plots/global_prop_zero.png", plot = p_global_prop_zero, width = 8, height = 6)
+
+
+# 3. Global Predictive Intervals for LTBI Counts
 # ---------------------------------------------------------
-# Diagnostic Plot 3: Predictive Intervals
-# Plots the data points against the 50% and 90% posterior predictive intervals.
-# Most points should fall within the bands.
+p_global_intervals <- ppc_intervals(y = stan_data$LTBI, yrep = LTBI_rep) + 
+  ggtitle("Global PPC: Predictive Intervals for LTBI Counts") +
+  coord_flip()
+
+ggsave("plots/global_intervals.png", plot = p_global_intervals, width = 8, height = 8)
+
+
+# 4. Global Probabilities (Histograms)
 # ---------------------------------------------------------
-ppc_intervals(y = stan_data$LTBI, yrep = LTBI_rep) + 
-  ggtitle("Predictive Intervals for LTBI Counts") +
-  coord_flip() # Flip coordinates if you have a lot of M observations
+# Screening Probability
+obs_global_screen <- sum(stan_data$SCR) / sum(stan_data$Y)
+rep_global_screen <- rowSums(SCR_rep) / rowSums(Y_rep)
+
+p_prob_screen <- ggplot(data.frame(Simulated_Rate = rep_global_screen), aes(x = Simulated_Rate)) +
+  geom_histogram(fill = "lightblue", color = "white", bins = 30) +
+  geom_vline(xintercept = obs_global_screen, color = "#002b5e", linewidth = 1.5) +
+  labs(title = "Global PPC: Average Screening Rate",
+       subtitle = "Dark blue line = Observed rate; Light blue bars = Model predictions",
+       x = "Overall Screening Rate (SCR / Y)", y = "Frequency")
+
+# LTBI Positivity Probability
+obs_global_ltbi <- sum(stan_data$LTBI) / sum(stan_data$SCR)
+rep_global_ltbi <- rowSums(LTBI_rep) / rowSums(SCR_rep)
+
+p_prob_ltbi <- ggplot(data.frame(Simulated_Rate = rep_global_ltbi), aes(x = Simulated_Rate)) +
+  geom_histogram(fill = "lightblue", color = "white", bins = 30) +
+  geom_vline(xintercept = obs_global_ltbi, color = "#002b5e", linewidth = 1.5) +
+  labs(title = "Global PPC: Average LTBI Positivity Rate",
+       subtitle = "Dark blue line = Observed rate; Light blue bars = Model predictions",
+       x = "Overall LTBI Positivity Rate (LTBI / SCR)", y = "Frequency")
+
+# Display Global Probability Plots and save
+p_global_probs <- p_prob_screen / p_prob_ltbi
+ggsave("plots/global_probabilities.png", plot = p_global_probs, width = 8, height = 8)
+
+
+# ==============================================================================
+# PART B: GROUPED DIAGNOSTICS (BY SETTING)
+# ==============================================================================
+
+# 1. Grouped Density Overlays & Bar Plots
+# ---------------------------------------------------------
+p_grouped_y <- ppc_dens_overlay_grouped(y = stan_data$Y, yrep = Y_rep[1:100, ], group = setting_group) + 
+  ggtitle("Grouped PPC: Total Identified (Y) by Setting")
+ggsave("plots/grouped_y.png", plot = p_grouped_y, width = 10, height = 8)
+
+p_grouped_scr <- ppc_dens_overlay_grouped(y = stan_data$SCR, yrep = SCR_rep[1:100, ], group = setting_group) + 
+  ggtitle("Grouped PPC: Screened (SCR) by Setting")
+ggsave("plots/grouped_scr.png", plot = p_grouped_scr, width = 10, height = 8)
+
+p_grouped_ltbi <- ppc_bars_grouped(y = stan_data$LTBI, yrep = LTBI_rep[1:100, ], group = setting_group) + 
+  coord_cartesian(xlim = c(-0.5, 20)) + 
+  ggtitle("Grouped PPC: Latent TB (LTBI) by Setting")
+ggsave("plots/grouped_ltbi.png", plot = p_grouped_ltbi, width = 10, height = 8)
+
+
+# 2. Grouped Proportion of Zeros
+# ---------------------------------------------------------
+p_grouped_prop_zero <- ppc_stat_grouped(y = stan_data$LTBI, yrep = LTBI_rep, group = setting_group, stat = "prop_zero") + 
+  ggtitle("Grouped PPC: Proportion of Zeros in LTBI by Setting")
+
+ggsave("plots/grouped_prop_zero.png", plot = p_grouped_prop_zero, width = 10, height = 8)
+
+
+# 3. Grouped Probabilities (Caterpillar Plots)
+# ---------------------------------------------------------
+J <- max(stan_data$S) # Total number of settings
+
+# Initialize containers
+obs_rate_screen <- numeric(J)
+rep_rate_screen <- matrix(NA, nrow = nrow(Y_rep), ncol = J)
+obs_rate_ltbi   <- numeric(J)
+rep_rate_ltbi   <- matrix(NA, nrow = nrow(Y_rep), ncol = J)
+
+# Calculate rates per setting
+for (j in 1:J) {
+  idx <- which(stan_data$S == j) # Get rows for setting j
+  
+  # Screening Rate per Setting
+  if (sum(stan_data$Y[idx]) > 0) {
+    obs_rate_screen[j]   <- sum(stan_data$SCR[idx]) / sum(stan_data$Y[idx])
+    rep_rate_screen[, j] <- rowSums(SCR_rep[, idx, drop = FALSE]) / rowSums(Y_rep[, idx, drop = FALSE])
+  } else {
+    obs_rate_screen[j]   <- NA
+    rep_rate_screen[, j] <- NA
+  }
+  
+  # LTBI Rate per Setting
+  if (sum(stan_data$SCR[idx]) > 0) {
+    obs_rate_ltbi[j]   <- sum(stan_data$LTBI[idx]) / sum(stan_data$SCR[idx])
+    rep_rate_ltbi[, j] <- rowSums(LTBI_rep[, idx, drop = FALSE]) / rowSums(SCR_rep[, idx, drop = FALSE])
+  } else {
+    obs_rate_ltbi[j]   <- NA
+    rep_rate_ltbi[, j] <- NA
+  }
+}
+
+# Plot Grouped Screening Rates
+screen_group <- 
+  ppc_intervals(y = obs_rate_screen, yrep = rep_rate_screen) + 
+  ggtitle("Group Average: Screening Rate by Setting") +
+  labs(x = "Setting Index", y = "Screening Rate (SCR/Y)") +
+  coord_flip()
+
+# Plot Grouped LTBI Positivity Rates
+ltbi_group <- 
+  ppc_intervals(y = obs_rate_ltbi, yrep = rep_rate_ltbi) + 
+  ggtitle("Group Average: LTBI Positivity Rate by Setting") +
+  labs(x = "Setting Index", y = "LTBI Positivity Rate (LTBI/SCR)") +
+  coord_flip()
+
+# Combine and save
+p_grouped_probs <- screen_group / ltbi_group
+ggsave("plots/grouped_probabilities.png", plot = p_grouped_probs, width = 8, height = 10)
