@@ -421,3 +421,89 @@ ltbi_group <-
 # Combine and save
 p_grouped_probs <- screen_group / ltbi_group
 ggsave("plots/grouped_probabilities.png", plot = p_grouped_probs, width = 8, height = 10)
+
+###################
+# cascade PPC plot
+
+setting_names <- c(
+  "Commercial", 
+  "Education", 
+  "Factory/workplace", 
+  "Hospital/clinic/care centre", 
+  "Other"
+)
+
+# 1. Setup the total number of settings and an empty data frame
+J <- max(stan_data$S)
+df_ppc_cascade <- data.frame()
+
+# 2. Calculate observed and predicted aggregates per setting
+for (j in 1:J) {
+  # Get indices for observations in setting j
+  idx <- which(stan_data$S == j)
+  
+  # A. Sum observed data for this setting
+  obs_y <- sum(stan_data$Y[idx])
+  obs_scr <- sum(stan_data$SCR[idx])
+  obs_ltbi <- sum(stan_data$LTBI[idx])
+  
+  # B. Sum the simulated predictions for this setting (across all rows/draws)
+  pred_y_sums <- rowSums(Y_rep[, idx, drop = FALSE])
+  pred_scr_sums <- rowSums(SCR_rep[, idx, drop = FALSE])
+  pred_ltbi_sums <- rowSums(LTBI_rep[, idx, drop = FALSE])
+  
+  # C. Helper function to calculate median and 95% CrI for each stage
+  make_stage_row <- function(stage_name, obs, preds) {
+    data.frame(
+      Setting = setting_names[j],
+      Stage = stage_name,
+      Observed = obs,
+      Pred_Med = median(preds),
+      Pred_Lo = quantile(preds, 0.025, na.rm = TRUE),
+      Pred_Hi = quantile(preds, 0.975, na.rm = TRUE)
+    )
+  }
+  
+  # D. Append to the main data frame
+  df_ppc_cascade <- bind_rows(
+    df_ppc_cascade,
+    make_stage_row("Identified", obs_y, pred_y_sums),
+    make_stage_row("Screened", obs_scr, pred_scr_sums),
+    make_stage_row("Latent", obs_ltbi, pred_ltbi_sums)
+  )
+}
+
+# 3. Format factors to ensure correct left-to-right plotting order
+df_ppc_cascade$Stage <- factor(df_ppc_cascade$Stage, levels = c("Identified", "Screened", "Latent"))
+
+# 4. Generate the PPC Cascade Plot
+p_cascade_ppc <- ggplot(df_ppc_cascade, aes(x = Stage, group = Setting)) +
+  # Model Prediction Uncertainty (95% Credible Interval Ribbon)
+  geom_ribbon(aes(ymin = Pred_Lo, ymax = Pred_Hi), fill = "lightblue", alpha = 0.5) +
+  # Model Prediction Median (Dashed line)
+  geom_line(aes(y = Pred_Med), color = "blue", linetype = "dashed", linewidth = 1) +
+  geom_point(aes(y = Pred_Med), color = "blue", shape = 1, size = 2) +
+  # Observed True Data (Solid line)
+  geom_line(aes(y = Observed), color = "black", linewidth = 1.2) +
+  geom_point(aes(y = Observed), color = "black", size = 2.5) +
+  
+  # Aesthetics and scaling
+  scale_y_log10(labels = comma) + 
+  # facet_wrap(~Setting, scales = "free_y") + # Creates a grid of plots, one for each setting
+  facet_wrap(~Setting) +
+  theme_bw() +
+  labs(
+    title = "PPC: Cascade by Setting",
+    subtitle = "Black Solid Line = Observed Data | Blue Dashed Line & Ribbon = Model Prediction (Median & 95% CrI)",
+    x = "Cascade Stage",
+    y = "Total Count (Log10 Scale)"
+  ) +
+  theme(
+    strip.background = element_rect(fill = "#002b5e"),
+    strip.text = element_text(color = "white", face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+print(p_cascade_ppc)
+
+ggsave("plots/ppc_cascade_per_setting.png", plot = p_cascade_ppc, width = 10, height = 8)
