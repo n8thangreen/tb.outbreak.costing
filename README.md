@@ -89,7 +89,7 @@ Folder | Purpose
 Contributions, issues and feature requests are welcome. Please open an issue describing the change or a pull request with proposed fixes and tests where appropriate.
 
 ### License
-This repository's license should be added here. If none is present, please add a suitable license (e.g., MIT, GPL-3) via a LICENSE file.
+GPL-3
 
 ### Contact
-For questions about the model or data, open an issue or contact the repository owner: n8thangreen on GitHub.
+For questions about the model or data, open an issue or contact the @n8thangreen on GitHub.
