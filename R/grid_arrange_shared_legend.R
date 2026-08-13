@@ -1,5 +1,5 @@
 
-#' Use single legend
+#' Use single legend in grid of plots
 #'
 #' from https://cran.r-project.org/web/packages/egg/vignettes/Ecosystem.html
 #'
@@ -11,7 +11,6 @@ grid_arrange_shared_legend <- function(...,
                                        ncol = length(list(...)),
                                        nrow = 1,
                                        position = c("bottom", "right", "top")) {
-
   plots <- list(...)
   position <- match.arg(position)
 
