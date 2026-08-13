@@ -1,5 +1,6 @@
-
+# ========================================
 # tables for paper using BUGS output
+# ========================================
 
 library(MCMCvis)
 library(dplyr)

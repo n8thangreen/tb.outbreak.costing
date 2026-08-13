@@ -1,5 +1,6 @@
 # ============================================
 # Poisson correlated TB intensities
+# stan model fit and ppc
 # ============================================
 
 library(R2jags)
@@ -54,7 +55,7 @@ data {
   int<lower=1> L;                      // Total number of years
   int<lower=1> J;                      // Total number of settings
   
-  array[M] int<lower=0> LTBI;           // Sub-counts (must be <= Y[m])
+  array[M] int<lower=0> LTBI;          // Sub-counts (must be <= Y[m])
   array[M] int<lower=0> SCR;           // Sub-counts (must be <= Y[m])
   array[M] int<lower=0> Y;             // Observed counts
   array[M] int<lower=1, upper=J> S;    // Setting index for each observation m
@@ -257,6 +258,19 @@ fit <- mod_cross_olre$sample(
   iter_sampling = 1000,
   adapt_delta = 0.93
 )
+
+fit$save_object(file = here::here("data/stan_fit.rds"))
+
+# To load later:
+# fit <- readRDS(here::here("data/stan_fit.rds"))
+
+
+
+
+
+
+
+
 
 # ==============================================================================
 # POSTERIOR PREDICTIVE CHECKS (GLOBAL AND GROUPED)
