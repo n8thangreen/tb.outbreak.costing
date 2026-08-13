@@ -68,42 +68,29 @@ for (i in 1:n_grid) {
 
 
 # ==========================================================
-# 2. Reconstruct Setting-Only Parameters (Pooled Year)
+# 2. Reconstruct Setting-Only Parameters (Marginalized)
 # ==========================================================
-# Using the marginal expectations (Y_rep) to account for all variance components
-
-Y_rep_mat    <- as.matrix(fit_stan$draws("Y_rep", format = "draws_matrix"))
-SCR_rep_mat  <- as.matrix(fit_stan$draws("SCR_rep", format = "draws_matrix"))
-LTBI_rep_mat <- as.matrix(fit_stan$draws("LTBI_rep", format = "draws_matrix"))
-
-n_settings <- length(set_levels)
-
-sp_ltbi_mat       <- matrix(NA, nrow = n_iters, ncol = n_settings)
-sp_screen_mat     <- matrix(NA, nrow = n_iters, ncol = n_settings)
-srate_id_mat      <- matrix(NA, nrow = n_iters, ncol = n_settings)
-pred_n_screen_mat <- matrix(NA, nrow = n_iters, ncol = n_settings)
-pred_n_ltbi_mat   <- matrix(NA, nrow = n_iters, ncol = n_settings)
-
-# Set column names to setting names for automatic labeling in bayesplot
-colnames_set <- set_levels
-colnames(sp_ltbi_mat)       <- colnames_set
-colnames(sp_screen_mat)     <- colnames_set
-colnames(srate_id_mat)      <- colnames_set
-colnames(pred_n_screen_mat) <- colnames_set
-colnames(pred_n_ltbi_mat)   <- colnames_set
 
 for (j in 1:n_settings) {
-  # Assuming stan_data$S contains the setting index for each observation
   cols_j <- which(dat$setting == set_levels[j]) 
   
+  # 1. Expected Counts 
+  # (Means across incidents for the "Average Incident" plots)
   srate_id_mat[, j]      <- rowMeans(Y_rep_mat[, cols_j])
   pred_n_screen_mat[, j] <- rowMeans(SCR_rep_mat[, cols_j])
   pred_n_ltbi_mat[, j]   <- rowMeans(LTBI_rep_mat[, cols_j])
   
-  sp_screen_mat[, j]     <- pred_n_screen_mat[, j] / srate_id_mat[, j]
-  sp_ltbi_mat[, j]       <- pred_n_ltbi_mat[, j] / pred_n_screen_mat[, j]
+  # 2. Marginalized Probabilities (Accounting for OLRE)
+  # Ratio of the SUMS across all incidents in the setting per iteration.
+  # This fully accounts for the OLRE variance, naturally weights by incident size, 
+  # and guarantees the probabilities are strictly bounded between 0 and 1.
+  
+  sp_screen_mat[, j] <- rowSums(SCR_rep_mat[, cols_j]) / rowSums(Y_rep_mat[, cols_j])
+  
+  # We add a tiny constant (1e-9) to the denominator to prevent division by zero 
+  # in the extremely rare edge-case where 0 people are screened in a simulation.
+  sp_ltbi_mat[, j]   <- rowSums(LTBI_rep_mat[, cols_j]) / (rowSums(SCR_rep_mat[, cols_j]) + 1e-9)
 }
-
 
 # ==========================================================
 # 3. Standard Forest Plots (Replacing mcmcplots::caterplot)
@@ -163,3 +150,90 @@ fp <- grid.arrange(fp_ltbi, fp_screen, fp_id, fp_nscreen, fp_nltbi, nrow = 2, nc
 fp <- wrap_plots(fp_ltbi, fp_screen, fp_id, fp_nscreen, fp_nltbi, nrow = 2, ncol = 3)
 
 ggsave(here::here("plots/forest_plot_setting.png"), plot = fp, width = 40, height = 30, units = "cm", dpi = 640)
+
+# ==========================================================
+# Publication-Ready Forest Plots
+# ==========================================================
+
+build_pub_plot <- function(mat, title, x_limits = NULL) {
+  
+  # 1. Extract Median and 95% CrI from the matrix
+  plot_data <- data.frame(
+    Setting = colnames(mat),
+    med = apply(mat, 2, median, na.rm = TRUE),
+    l95 = apply(mat, 2, quantile, probs = 0.025, na.rm = TRUE),
+    u95 = apply(mat, 2, quantile, probs = 0.975, na.rm = TRUE)
+  )
+  
+  # Ensure Settings are factored so they plot in the correct top-to-bottom order
+  # Reversing the levels ensures the first level is at the top of the y-axis
+  plot_data$Setting <- factor(plot_data$Setting, levels = rev(colnames(mat)))
+  
+  # 2. Build the ggplot
+  p <- ggplot(plot_data, aes(x = med, y = Setting, color = Setting)) +
+    # Draw the intervals and point estimates
+    geom_pointrange(aes(xmin = l95, xmax = u95), size = 0.6, linewidth = 1) +
+    
+    # Titles and labels
+    labs(title = title, x = NULL, y = NULL) +
+    
+    # Use standard ggplot2 hue colors (which match your original JPEG exactly)
+    scale_color_discrete(name = "Setting") +
+    
+    # Apply publication styling
+    theme_bw(base_size = 14) +
+    theme(
+      plot.title = element_text(hjust = 0, size = 16, margin = margin(b = 10)),
+      axis.text.y = element_blank(),               # Remove y-axis text
+      axis.ticks.y = element_line(color = "grey80"),
+      panel.grid.major.y = element_line(color = "grey90", linetype = "dashed"),
+      panel.grid.minor = element_blank(),
+      legend.position = "none"                     # Hide individual legends
+    )
+  
+  # Apply manual x-axis limits if provided
+  if (!is.null(x_limits)) {
+    p <- p + coord_cartesian(xlim = x_limits)
+  }
+  
+  return(p)
+}
+
+# ==========================================================
+# Generate Individual Plots
+# ==========================================================
+# Using the matrices calculated in the previous step (sp_ltbi_mat, etc.)
+
+fp_ltbi    <- build_pub_plot(sp_ltbi_mat, "Probability LTBI", x_limits = c(0.0, 0.10))
+fp_screen  <- build_pub_plot(sp_screen_mat, "Probability Screened", x_limits = c(0.55, 1))
+fp_id      <- build_pub_plot(srate_id_mat, "Identification rate", x_limits = c(0, 120))
+fp_nscreen <- build_pub_plot(pred_n_screen_mat, "Number screened", x_limits = c(0, 90))
+fp_nltbi   <- build_pub_plot(pred_n_ltbi_mat, "Number LTBI", x_limits = c(0, 6))
+
+# ==========================================================
+# Combine and Format with Patchwork
+# ==========================================================
+
+# Wrap the plots into a grid. 
+# Because there are 5 plots, patchwork will leave the bottom-right space empty.
+fp_combined <- wrap_plots(
+  fp_ltbi, fp_screen, fp_id, 
+  fp_nscreen, fp_nltbi, 
+  nrow = 2, ncol = 3
+) + 
+  # guides = "collect" pulls the hidden legends from the plots and combines them
+  plot_layout(guides = "collect") & 
+  
+  # The '&' operator applies this theme to the ENTIRE patchwork assembly
+  theme(
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold", size = 14),
+    legend.text = element_text(size = 12)
+  )
+
+# View the plot
+print(fp_combined)
+
+# Save the final publication plot
+ggsave(here::here("plots/forest_plot_setting.png"), 
+       plot = fp_combined, width = 16, height = 10, dpi = 640)

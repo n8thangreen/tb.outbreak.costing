@@ -223,22 +223,30 @@ generated quantities {
   array[M] int<lower=0> LTBI_rep;
   
   // Vector to store log-likelihood for LOO-CV model comparison
-  vector[M] log_lik; 
+  vector[M] log_lik;
+  
+  // Number Needed to Screen
+  vector[N] nns_incident;
 
   for (m in 1:M) {
     // 1. Simulate Total Identified
     Y_rep[m] = poisson_log_rng(log_lambda[m]);
     
     // 2. Simulate Screened (conditional on observed Y)
-    SCR_rep[m] = binomial_rng(Y[m], inv_logit(logit_q[m]));
+    SCR_rep[m] = binomial_rng(Y_rep[m], inv_logit(logit_q[m]));
     
     // 3. Simulate LTBI (conditional on observed SCR)
-    LTBI_rep[m] = binomial_rng(SCR[m], inv_logit(logit_d[m]));
+    LTBI_rep[m] = binomial_rng(SCR_rep[m], inv_logit(logit_d[m]));
     
     // 4. Calculate log-likelihood
     log_lik[m] = poisson_log_lpmf(Y[m] | log_lambda[m]) + 
                  binomial_logit_lpmf(SCR[m] | Y[m], logit_q[m]) + 
                  binomial_logit_lpmf(LTBI[m] | SCR[m], logit_d[m]);
+
+    // 5. Incident-level NNS
+    // add a tiny constant to prevent a division-by-zero error in the 
+    // extreme edge case where latent probability drops perfectly to 0
+    nns_incident[n] = 1.0 / (inv_logit(logit_p_ltbi[n]) + 1e-9);
   }
 }
 "
